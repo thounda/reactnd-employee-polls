@@ -1,81 +1,74 @@
+/**
+ * File: src/App.js
+ * Description: The root component of the application. Handles initial data loading,
+ * Redux setup, and client-side routing, including authentication protection.
+ */
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { handleInitialData } from './actions/shared.js'; // Requires actions/shared.js
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { handleInitialData } from './actions/shared.js';
 
-// Component Imports (Placeholders we will create next)
+// Components
+import Navigation from './components/Navigation.js';
 import Login from './components/Login.js';
-import Nav from './components/Nav.js';
-import Dashboard from './components/Dashboard.js'; 
-import NewPoll from './components/NewPoll.js'; 
+import RequireAuth from './components/RequireAuth.js';
+// Placeholder components (will be created in upcoming steps)
+import Dashboard from './components/Dashboard.js';
+import NewPoll from './components/NewPoll.js';
+import Leaderboard from './components/Leaderboard.js';
 import PollDetail from './components/PollDetail.js';
-import Error404 from './components/Error404.js'; 
+import NotFound from './components/NotFound.js'; // 404 Page
 
-// ---------------------------------------------------------------------------
-// Private Route Component (Wrapper for protected routes)
-// ---------------------------------------------------------------------------
-/**
- * @description A wrapper component that checks for authentication.
- * If the user is authenticated, it renders the child element.
- * Otherwise, it redirects the user to the Login page.
- */
-const PrivateRoute = ({ children }) => {
-  // We use the Redux state to determine if a user is logged in
-  const authedUser = useSelector((state) => state.authedUser);
-  return authedUser ? children : <Navigate to="/login" replace />;
-};
-
-// ---------------------------------------------------------------------------
-// Main App Component
-// ---------------------------------------------------------------------------
 function App() {
   const dispatch = useDispatch();
-  const authedUser = useSelector((state) => state.authedUser);
-  const usersLoaded = useSelector((state) => Object.keys(state.users).length > 0);
 
-  // Load initial data (users and questions) when the app mounts
+  // Check if both users and questions are loaded. We don't need to check authedUser here.
+  const loading = useSelector(
+    (state) => Object.keys(state.users).length === 0 || Object.keys(state.questions).length === 0
+  );
+
   useEffect(() => {
-    // Only fetch data if users haven't been loaded yet
-    if (!usersLoaded) {
-      dispatch(handleInitialData());
-    }
-  }, [dispatch, usersLoaded]);
+    // Dispatch the thunk action to fetch initial data when the component first mounts
+    dispatch(handleInitialData());
+  }, [dispatch]);
 
-  // Display a loading screen while initial data is being fetched
-  if (!usersLoaded) {
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-100">
-        <div className="text-xl font-semibold text-indigo-600 animate-pulse">Loading Application Data...</div>
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <div className="text-2xl font-semibold text-indigo-600 animate-pulse p-8 rounded-lg shadow-xl bg-white">
+          Loading Application Data...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100">
-      {/* Navigation is only rendered if the user is authenticated */}
-      {authedUser && <Nav />}
+    <Router>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Navigation Bar is always present, regardless of auth status (it handles its own rendering) */}
+        <Navigation />
 
-      <main className="flex-grow p-4 lg:p-8">
-        <div className="max-w-4xl mx-auto">
+        <main className="flex-grow p-4 md:p-8">
           <Routes>
+            {/* 1. Public Route: Login */}
             <Route path="/login" element={<Login />} />
-            
-            {/* Protected Routes: Require authentication via PrivateRoute */}
-            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/add" element={<PrivateRoute><NewPoll /></PrivateRoute>} />
-            <Route path="/leaderboard" element={<PrivateRoute><div className="text-center p-10 bg-white rounded-xl shadow-lg">Leaderboard Component Coming Soon!</div></PrivateRoute>} />
-            <Route path="/questions/:id" element={<PrivateRoute><PollDetail /></PrivateRoute>} />
-            
-            {/* Catch-all 404 Route */}
-            <Route path="*" element={<Error404 />} />
+
+            {/* 2. Protected Routes Group */}
+            {/* The RequireAuth component dictates if the user can view the nested routes (Outlet) */}
+            <Route element={<RequireAuth />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/add" element={<NewPoll />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+              {/* Note: The 'question_id' parameter will be used to fetch the poll details */}
+              <Route path="/questions/:question_id" element={<PollDetail />} />
+            </Route>
+
+            {/* 3. 404 Route - Catch all other unknown paths */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
-        </div>
-      </main>
-      
-      <footer className="w-full bg-white p-4 text-center text-sm text-gray-500 border-t border-gray-200 mt-auto">
-        Employee Polls App &copy; {new Date().getFullYear()}
-      </footer>
-    </div>
+        </main>
+      </div>
+    </Router>
   );
 }
 
