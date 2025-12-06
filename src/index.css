@@ -1,0 +1,14 @@
+/* CRITICAL: These three directives MUST be at the very top.
+They are processed by PostCSS/Tailwind to generate all utility classes.
+*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom global styles can go below here */
+body {
+    margin: 0;
+    font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    background-color: #f7f7f7;
+}
