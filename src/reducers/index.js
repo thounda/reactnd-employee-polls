@@ -1,23 +1,19 @@
 /**
  * File: src/reducers/index.js
- * Description: The root reducer that combines all individual reducers (authedUser, users, questions).
+ * Description: Combines all individual reducers into the root reducer for the Redux store.
  */
 import { combineReducers } from 'redux';
+import { loadingBarReducer } from 'react-redux-loading-bar'; // <-- CRITICAL: Import the loading bar reducer
+
+// Import our custom reducers
 import authedUser from './authedUser.js';
 import users from './users.js';
 import questions from './questions.js';
 
-/**
- * @description Combines all individual reducers into a single root reducer.
- * The resulting state shape will be:
- * {
- * authedUser: 'user_id' | null,
- * users: { 'user_id': {...}, ... },
- * questions: { 'question_id': {...}, ... }
- * }
- */
+// Combine them into the root reducer
 export default combineReducers({
   authedUser,
   users,
   questions,
+  loadingBar: loadingBarReducer, // <-- CRITICAL: Include the loading bar reducer
 });

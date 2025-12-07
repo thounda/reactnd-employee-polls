@@ -1,3 +1,8 @@
+/**
+ * File: src/main.js
+ * Description: The main entry point for the React application.
+ * Initializes the Redux store, sets up routing, and renders the root component.
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
@@ -9,7 +14,9 @@ import middleware from './middleware/index.js'; // Redux Middleware (including T
 import './index.css';
 
 // Create the Redux store with the combined reducers and middleware
-const store = createStore(reducer, middleware);
+// FIX: The middleware (enhancer) must be passed as the third argument.
+// We use 'undefined' for the optional preloadedState argument.
+const store = createStore(reducer, undefined, middleware); 
 
 // Root rendering of the application
 ReactDOM.createRoot(document.getElementById('root')).render(

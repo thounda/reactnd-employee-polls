@@ -6,7 +6,7 @@
 import {
   RECEIVE_QUESTIONS,
   ADD_QUESTION,
-  ADD_ANSWER,
+  SAVE_QUESTION_ANSWER, // Corrected constant name
 } from '../actions/questions.js';
 
 /**
@@ -19,6 +19,7 @@ export default function questions(state = {}, action) {
   switch (action.type) {
     case RECEIVE_QUESTIONS:
       return {
+        ...state,
         ...action.questions,
       };
 
@@ -33,7 +34,7 @@ export default function questions(state = {}, action) {
       };
     }
 
-    case ADD_ANSWER: {
+    case SAVE_QUESTION_ANSWER: { // Corrected constant name
       // Wrapped in curly braces to create a block scope for 'qid', 'authedUser', 'answer'
       const {
         qid,
