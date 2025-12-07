@@ -1,27 +1,47 @@
 /**
  * File: src/utils/api.js
- * Description: The application's core API service wrapper. All Redux actions
- * import functions from here. This allows easy swapping of the underlying
- * data source (e.g., from _DATA.js to a real server endpoint) without
- * changing the actions.
+ * Description: Wrapper for all API functions, primarily calling the mock database (_DATA.js).
+ * This structure makes it easy to swap the mock API for a real backend later.
  */
+
+// Import low-level mock database functions
 import {
-  getInitialData as _getInitialData, // Renamed for clarity on import
+  _getUsers,
+  _getQuestions,
   _saveQuestion,
-  _saveQuestionAnswer,
+  _saveQuestionAnswer
 } from './_DATA.js';
 
-// The function exported to Redux actions for initial data fetching
+/**
+ * @description Fetches the initial data required to start the application:
+ * the list of all users and the list of all questions.
+ * @returns {Promise<Object>} An object containing users and questions.
+ */
 export function getInitialData() {
-  return _getInitialData();
+  // Use Promise.all to fetch both data sets in parallel
+  return Promise.all([
+    _getUsers(),
+    _getQuestions(),
+  ]).then(([users, questions]) => ({
+    users,
+    questions,
+  }));
 }
 
-// The function exported to Redux actions for saving new questions
+/**
+ * @description Saves a new question to the database.
+ * @param {Object} question - The question object to save.
+ * @returns {Promise<Object>} The saved question object.
+ */
 export function saveQuestion(question) {
   return _saveQuestion(question);
 }
 
-// The function exported to Redux actions for saving user answers
+/**
+ * @description Saves a user's answer to a question.
+ * @param {Object} info - { authedUser, qid, answer }
+ * @returns {Promise<boolean>} True upon successful save.
+ */
 export function saveQuestionAnswer(info) {
   return _saveQuestionAnswer(info);
 }

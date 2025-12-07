@@ -1,21 +1,17 @@
 /**
  * File: src/actions/users.js
- * Description: Action creators for managing the state of application users.
- * Includes helpers for updating user records when new questions or answers are saved.
+ * Description: Action creators for users (loading and updating answers/questions).
+ * These are used by other thunks (e.g., in questions.js) to update the users slice of state.
  */
 
-// Action Types
 export const RECEIVE_USERS = 'RECEIVE_USERS';
-export const ADD_QUESTION_TO_USER = 'ADD_QUESTION_TO_USER';
-export const ADD_ANSWER_TO_USER = 'ADD_ANSWER_TO_USER';
-
-// Action Creators (Synchronous)
+export const ADD_USER_ANSWER = 'ADD_USER_ANSWER';
+export const ADD_USER_QUESTION = 'ADD_USER_QUESTION';
 
 /**
- * @description Creates an action to receive the initial list of users.
- * This is used by the handleInitialData thunk.
- * @param {Object} users - Object mapping user IDs to user objects.
- * @returns {{type: string, users: Object}}
+ * Action creator to load all users into the store.
+ * @param {Object} users - Map of user objects.
+ * @returns {Object} Redux action.
  */
 export function receiveUsers(users) {
   return {
@@ -24,32 +20,31 @@ export function receiveUsers(users) {
   };
 }
 
-// Internal Helper Action Creators (Used by questions.js thunks)
-
 /**
- * @description Creates an action to add a new question ID to the list of questions
- * created by a specific user.
- * @param {Object} question - The newly created question object, containing { id, author }.
- * @returns {{type: string, id: string, author: string}}
+ * Action creator for adding a recorded answer to a user.
+ * NOTE: The name is simplified to match the import in questions.js.
+ * @param {Object} info - { authedUser, qid, answer }
+ * @returns {Object} Redux action.
  */
-export function _addQuestionToUser({ id, author }) {
+export function addUserAnswer({ authedUser, qid, answer }) {
   return {
-    type: ADD_QUESTION_TO_USER,
-    id,
-    author,
+    type: ADD_USER_ANSWER,
+    authedUser,
+    qid,
+    answer,
   };
 }
 
 /**
- * @description Creates an action to record a user's answer/vote to a specific question.
- * @param {Object} info - { authedUser, qid, answer }
- * @returns {{type: string, authedUser: string, qid: string, answer: string}}
+ * Action creator for adding a newly created question to the author's list.
+ * NOTE: The name is simplified to match the import in questions.js.
+ * @param {Object} question - The new question object.
+ * @returns {Object} Redux action.
  */
-export function _addAnswerToUser({ authedUser, qid, answer }) {
+export function addUserQuestion(question) {
   return {
-    type: ADD_ANSWER_TO_USER,
-    authedUser,
-    qid,
-    answer,
+    type: ADD_USER_QUESTION,
+    // The question object contains the ID and the author, which are needed in the reducer
+    question, 
   };
 }

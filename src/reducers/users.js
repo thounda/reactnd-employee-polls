@@ -1,50 +1,56 @@
 /**
  * File: src/reducers/users.js
- * Description: Reducer for managing all user records.
- * It handles receiving initial data, adding a new question ID to a user's list,
- * and recording a user's answer/vote.
+ * Description: Reducer for the users collection, handling updates when answers or new questions are created.
  */
-import {
-  RECEIVE_USERS,
-  ADD_QUESTION_TO_USER,
-  ADD_ANSWER_TO_USER,
+import { 
+  RECEIVE_USERS, 
+  ADD_USER_ANSWER, 
+  ADD_USER_QUESTION 
 } from '../actions/users.js';
 
 /**
- * @description The reducer function for the `users` slice of state.
- * @param {Object} state - The current state object mapping user IDs to user objects.
- * @param {Object} action - The dispatched Redux action.
+ * @description Reducer function for the users slice of state.
+ * @param {Object} state - The current users object.
+ * @param {Object} action - The Redux action.
  * @returns {Object} The new users state.
  */
 export default function users(state = {}, action) {
   switch (action.type) {
     case RECEIVE_USERS:
+      // When receiving initial data, replace the state with the new users
       return {
+        ...state,
         ...action.users,
       };
 
-    case ADD_QUESTION_TO_USER:
-      // Update the author's record to include the new question ID
-      return {
-        ...state,
-        [action.author]: {
-          ...state[action.author],
-          questions: state[action.author].questions.concat([action.id]),
-        },
-      };
+    case ADD_USER_ANSWER: { // Fix: Wrap with block scope
+      // Action payload: { authedUser, qid, answer }
+      const { authedUser, qid, answer } = action;
 
-    case ADD_ANSWER_TO_USER:
-      // Update the user's record to include the answer
       return {
         ...state,
-        [action.authedUser]: {
-          ...state[action.authedUser],
+        [authedUser]: {
+          ...state[authedUser],
           answers: {
-            ...state[action.authedUser].answers,
-            [action.qid]: action.answer,
+            ...state[authedUser].answers,
+            [qid]: answer, // Add the new answer to the user's answers map
           },
         },
       };
+    } // Fix: Close block scope
+
+    case ADD_USER_QUESTION: { // Fix: Wrap with block scope
+      // Action payload: { question: { id, author, ... } }
+      const { question } = action;
+
+      return {
+        ...state,
+        [question.author]: {
+          ...state[question.author],
+          questions: state[question.author].questions.concat([question.id]), // Add the new question ID to the author's list
+        },
+      };
+    } // Fix: Close block scope
 
     default:
       return state;
