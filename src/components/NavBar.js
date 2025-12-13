@@ -6,15 +6,21 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setAuthedUser } from '../actions/authedUser'; // We will create this action soon
+// Assuming setAuthedUser handles both login (id) and logout (null)
+import { setAuthedUser } from '../actions/authedUser'; 
 
 function NavBar() {
   const dispatch = useDispatch();
   const authedUser = useSelector((state) => state.authedUser);
   const users = useSelector((state) => state.users);
 
-  // Determine the display name for the authenticated user
-  const username = authedUser ? users[authedUser]?.name || 'Guest' : 'Guest';
+  // Get the complete user object for the authenticated user
+  const user = authedUser ? users[authedUser] : null; 
+  
+  // Determine the display name and avatar URL
+  const username = user?.name || 'Guest';
+  // Use a fallback URL in case the user object is missing or avatarURL is not present
+  const avatarURL = user?.avatarURL || 'https://placehold.co/40x40/6366F1/ffffff?text=U'; 
 
   /**
    * Handles the logout action by clearing the authedUser in Redux.
@@ -52,12 +58,20 @@ function NavBar() {
           <div className="flex items-center">
             {authedUser ? (
               <div className="flex items-center space-x-4">
+                
+                {/* NEW: Avatar Display */}
+                <img
+                  src={avatarURL}
+                  alt={`Avatar of ${username}`}
+                  className="w-8 h-8 rounded-full object-cover border-2 border-indigo-400"
+                />
+
                 <span className="text-sm font-medium text-gray-800 hidden sm:block">
                   Hello, {username}
                 </span>
                 <button
                   onClick={handleLogout}
-                  className="px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-md hover:bg-red-600 transition-colors"
+                  className="px-3 py-1 text-sm font-medium rounded-md text-white bg-red-500 hover:bg-red-600 transition-colors shadow-sm"
                   aria-label="Log out"
                 >
                   Logout

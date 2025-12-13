@@ -1,60 +1,74 @@
 /**
  * File: src/components/PollCard.js
- * Description: A reusable component to render a single poll question.
- * It displays basic information and provides a link to the detailed view.
+ * Description: Renders a summary card for a single poll question in the Dashboard list.
  */
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import Avatar from './Avatar.js';
 
-/**
- * @param {Object} props
- * @param {string} props.qid - The ID of the question to display.
- * @param {boolean} [props.showViewLink=true] - If true, displays the "View Poll" link (used on Dashboard).
- * @returns {JSX.Element}
- */
-function PollCard({ qid, showViewLink = true }) {
-  const question = useSelector(state => state.questions[qid]);
-  const author = useSelector(state => state.users[question.author]);
-
+function PollCard({ question, author, isAnswered }) {
+  // Fallback check in case data is still loading or missing (shouldn't happen here)
   if (!question || !author) {
-    // Should not happen if data is loaded, but handles edge case
-    return <div className="text-center text-red-500">Error: Poll or Author not found.</div>;
+    return null;
   }
 
-  const { name, avatarURL } = author;
+  // Determine the display message for the question summary
+  const summaryText = question.optionOne.text.slice(0, 30) + '...';
 
+  // Determine the route to view the details/results
+  const pollUrl = `/questions/${question.id}`;
+  
   return (
-    <div className="flex bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden transition duration-300 hover:shadow-xl hover:border-indigo-200">
+    <div className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg bg-white hover:shadow-md transition-shadow duration-200">
+      {/* Author Avatar (Placeholder) */}
+      <img
+        src={author.avatarURL || 'https://placehold.co/100x100/A5B4FC/ffffff?text=User'}
+        alt={`Avatar of ${author.name}`}
+        className="w-16 h-16 rounded-full object-cover border-2 border-indigo-200"
+      />
       
-      {/* Left Column: Author Info */}
-      <div className="w-1/3 bg-indigo-50 p-4 flex flex-col items-center justify-center border-r border-indigo-100">
-        <h3 className="text-xl font-semibold text-indigo-700 mb-2 text-center">{name} asks:</h3>
-        <Avatar url={avatarURL} name={name} size="w-20 h-20" />
+      {/* Question Details */}
+      <div className="flex-grow">
+        <p className="text-sm font-semibold text-gray-900 mb-1">{author.name} asks:</p>
+        <h3 className="text-lg font-bold text-indigo-600 mb-2">Would You Rather...</h3>
+        <p className="text-gray-600 text-sm italic mb-3">
+          {summaryText}
+        </p>
       </div>
 
-      {/* Right Column: Poll Content */}
-      <div className="w-2/3 p-6 flex flex-col justify-between">
-        <h4 className="text-2xl font-bold text-gray-800 mb-4">Would You Rather...</h4>
-        
-        {/* Display the first option snippet */}
-        <p className="text-lg text-gray-600 mb-6 truncate">
-          {question.optionOne.text} <span className="font-semibold text-gray-500">...or...</span>
-        </p>
-        
-        {/* View Poll Button (if enabled) */}
-        {showViewLink && (
-          <Link
-            to={`/questions/${qid}`}
-            className="w-full text-center py-3 px-4 border border-indigo-600 rounded-lg text-lg font-medium text-indigo-600 bg-white hover:bg-indigo-50 transition duration-150 transform hover:scale-[1.01] shadow-md"
-          >
-            View Poll
-          </Link>
-        )}
-      </div>
+      {/* Action Button */}
+      <Link
+        to={pollUrl}
+        className={`px-4 py-2 text-sm font-medium rounded-lg text-white transition-colors duration-150 shadow-sm
+          ${isAnswered 
+            ? 'bg-green-500 hover:bg-green-600' 
+            : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
+      >
+        {isAnswered ? 'View Results' : 'Answer Poll'}
+      </Link>
     </div>
   );
 }
 
-export default PollCard;
+/**
+ * Maps state to props for a single PollCard.
+ * @param {Object} state - The Redux store state.
+ * @param {Object} ownProps - Props passed directly to the component (specifically questionId).
+ * @returns {Object} Props containing the question object, author object, and answer status.
+ */
+function mapStateToProps({ questions, users, authedUser }, { questionId }) {
+  const question = questions[questionId];
+  const author = users[question.author];
+
+  // Check if the current user has answered this specific question
+  const isAnswered = users[authedUser]?.answers?.[questionId] !== undefined;
+
+  return {
+    question,
+    author,
+    isAnswered,
+  };
+}
+
+export default connect(mapStateToProps)(PollCard);
