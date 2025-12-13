@@ -4,22 +4,20 @@
  * Redux setup, and client-side routing, including authentication protection.
  */
 import React from 'react';
-// We only need Routes, Route, etc. because the Router context is already provided in main.js
 import { Routes, Route } from 'react-router-dom';
 
-// New: Import the custom hook to manage data loading
+// Import the custom hook to manage data loading
 import usePollData from './hooks/usePollData.js'; 
 
 // Components
-import Navigation from './components/Navigation.js';
+import NavBar from './components/NavBar.js'; // <-- Corrected: Using NavBar
 import Login from './components/Login.js';
 import RequireAuth from './components/RequireAuth.js';
-// Placeholder components
 import Dashboard from './components/Dashboard.js';
 import NewPoll from './components/NewPoll.js';
 import Leaderboard from './components/Leaderboard.js';
 import PollDetail from './components/PollDetail.js';
-import NotFound from './components/NotFound.js'; // 404 Page
+import NotFound from './components/NotFound.js';
 
 function App() {
   // Use the custom hook to handle data fetching and return the loading status
@@ -38,8 +36,8 @@ function App() {
   // NOTE: The <Router> component was removed as it is defined in src/main.js
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Navigation Bar is always present */}
-      <Navigation />
+      {/* Navigation Bar component */}
+      <NavBar /> 
 
       <main className="flex-grow p-4 md:p-8">
         <Routes>
@@ -48,9 +46,11 @@ function App() {
 
           {/* 2. Protected Routes Group */}
           <Route element={<RequireAuth />}>
+            {/* The default path is the Dashboard */}
             <Route path="/" element={<Dashboard />} />
             <Route path="/add" element={<NewPoll />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            {/* Dynamic route for viewing poll details */}
             <Route path="/questions/:question_id" element={<PollDetail />} />
           </Route>
 
