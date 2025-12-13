@@ -1,12 +1,11 @@
 /**
  * File: src/reducers/users.js
- * Description: Reducer for the users collection, handling updates when answers or new questions are created.
+ * Description: Reducer for the 'users' slice of state.
  */
-import { 
-  RECEIVE_USERS, 
-  ADD_USER_ANSWER, 
-  ADD_USER_QUESTION 
-} from '../actions/users.js';
+import { RECEIVE_USERS } from '../actions/users.js'; // Assume this exists
+import { ADD_ANSWER_TO_QUESTION } from '../actions/questions.js';
+
+// Assume ADD_QUESTION_TO_USER exists for future implementation (New Poll)
 
 /**
  * @description Reducer function for the users slice of state.
@@ -17,40 +16,25 @@ import {
 export default function users(state = {}, action) {
   switch (action.type) {
     case RECEIVE_USERS:
-      // When receiving initial data, replace the state with the new users
       return {
         ...state,
         ...action.users,
       };
 
-    case ADD_USER_ANSWER: { // Fix: Wrap with block scope
-      // Action payload: { authedUser, qid, answer }
+    case ADD_ANSWER_TO_QUESTION:
       const { authedUser, qid, answer } = action;
 
       return {
         ...state,
         [authedUser]: {
           ...state[authedUser],
+          // Add the answer to the user's answers dictionary
           answers: {
             ...state[authedUser].answers,
-            [qid]: answer, // Add the new answer to the user's answers map
+            [qid]: answer,
           },
         },
       };
-    } // Fix: Close block scope
-
-    case ADD_USER_QUESTION: { // Fix: Wrap with block scope
-      // Action payload: { question: { id, author, ... } }
-      const { question } = action;
-
-      return {
-        ...state,
-        [question.author]: {
-          ...state[question.author],
-          questions: state[question.author].questions.concat([question.id]), // Add the new question ID to the author's list
-        },
-      };
-    } // Fix: Close block scope
 
     default:
       return state;
