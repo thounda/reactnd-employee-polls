@@ -4,7 +4,7 @@
  */
 import {
   RECEIVE_QUESTIONS,
-  ADD_QUESTION, // Assume this exists for future use
+  ADD_QUESTION,
   ADD_ANSWER_TO_QUESTION,
 } from '../actions/questions.js';
 
@@ -25,12 +25,11 @@ export default function questions(state = {}, action) {
     case ADD_ANSWER_TO_QUESTION:
       const { qid, answer, authedUser } = action;
 
-      // Update the specific question object
+      // Update the specific question object with the new vote
       return {
         ...state,
         [qid]: {
           ...state[qid],
-          // Spread the selected option, adding the authedUser ID to the votes array
           [answer]: {
             ...state[qid][answer],
             votes: state[qid][answer].votes.concat([authedUser]),
@@ -39,8 +38,7 @@ export default function questions(state = {}, action) {
       };
 
     case ADD_QUESTION:
-      // Future implementation for adding a new question
-      // Assume action.question contains the full question object
+      // Add the newly created question object to the state, indexed by its ID
       return {
         ...state,
         [action.question.id]: action.question,
