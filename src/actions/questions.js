@@ -1,33 +1,18 @@
 /**
  * File: src/actions/questions.js
- * Description: Action creators and Thunks for questions (fetching, adding, answering).
+ * Description: Action creators and thunks for managing question data (fetching, adding, answering).
  */
-import { saveQuestion, saveQuestionAnswer } from '../utils/api.js';
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
-import { addUserAnswer, addUserQuestion } from './users.js';
+import { _saveQuestionAnswer } from '../utils/_DATA.js'; // API helper
 
-// Action Types
+// Action Type Constants
 export const RECEIVE_QUESTIONS = 'RECEIVE_QUESTIONS';
-export const ADD_QUESTION = 'ADD_QUESTION';
-export const SAVE_QUESTION_ANSWER = 'SAVE_QUESTION_ANSWER'; // FIX: Removed invalid 'as const'
+export const ADD_QUESTION = 'ADD_QUESTION'; // For future use
+export const ADD_ANSWER_TO_QUESTION = 'ADD_ANSWER_TO_QUESTION';
 
-// Action creator definitions (Synchronous)
-
-function addQuestion(question) {
-  return {
-    type: ADD_QUESTION,
-    question,
-  };
-}
-
-function recordQuestionAnswer({ authedUser, qid, answer }) {
-  return {
-    type: SAVE_QUESTION_ANSWER,
-    authedUser,
-    qid,
-    answer,
-  };
-}
+// -----------------------------------------------------------------------------
+// Action Creators
+// -----------------------------------------------------------------------------
 
 export function receiveQuestions(questions) {
   return {
@@ -36,73 +21,47 @@ export function receiveQuestions(questions) {
   };
 }
 
-
-// --- THUNKS ---
-
-/**
- * Thunk to handle adding a new question to the database and store.
- * @param {string} optionOneText - Text for the first option.
- * @param {string} optionTwoText - Text for the second option.
- * @returns {function} The thunk function.
- */
-export function handleAddQuestion(optionOneText, optionTwoText) {
-  return (dispatch, getState) => {
-    const { authedUser } = getState();
-
-    dispatch(showLoading());
-
-    const question = {
-      optionOneText,
-      optionTwoText,
-      author: authedUser,
-    };
-
-    return saveQuestion(question)
-      .then((formattedQuestion) => {
-        // Update both questions and users state
-        dispatch(addQuestion(formattedQuestion));
-        dispatch(addUserQuestion(formattedQuestion));
-      })
-      .catch((error) => {
-        console.error('Error in handleAddQuestion:', error);
-        throw error;
-      })
-      .finally(() => {
-        dispatch(hideLoading());
-      });
+export function addAnswerToQuestion({ authedUser, qid, answer }) {
+  return {
+    type: ADD_ANSWER_TO_QUESTION,
+    authedUser,
+    qid,
+    answer,
   };
 }
 
+// -----------------------------------------------------------------------------
+// Thunks
+// -----------------------------------------------------------------------------
+
 /**
- * Thunk to handle a user submitting an answer to a question.
- * The component expects this to be exported as handleAddAnswer.
- * @param {string} qid - The ID of the question.
+ * Redux Thunk to handle saving a user's answer to a question.
+ * @param {string} authedUser - The ID of the authenticated user.
+ * @param {string} qid - The ID of the question being answered.
  * @param {string} answer - The user's choice ('optionOne' or 'optionTwo').
- * @returns {function} The thunk function.
+ * @returns {Function} A Redux Thunk function.
  */
-export function handleSaveQuestionAnswer(qid, answer) {
-  return (dispatch, getState) => {
-    const { authedUser } = getState();
-
-    const info = { authedUser, qid, answer };
-
-    // Optimistically update the store immediately before API call
-    dispatch(recordQuestionAnswer(info));
-    dispatch(addUserAnswer(info));
-
+export function handleSaveQuestionAnswer(authedUser, qid, answer) {
+  return (dispatch) => {
     dispatch(showLoading());
 
-    return saveQuestionAnswer(info)
-      .catch((error) => {
-        console.error('Error in handleSaveQuestionAnswer:', error);
-        console.error('Failed to save answer. Please refresh to reset state.');
-        throw error; 
-      })
-      .finally(() => {
+    const answerInfo = { authedUser, qid, answer };
+
+    // Optimistically update the store before the API call
+    dispatch(addAnswerToQuestion(answerInfo));
+
+    // Call the API to save the answer
+    return _saveQuestionAnswer(answerInfo)
+      .then(() => {
         dispatch(hideLoading());
+      })
+      .catch((e) => {
+        console.error('Error saving question answer: ', e);
+        
+        // Log error and hide loading bar
+        dispatch(hideLoading()); 
+        // Note: Using a custom modal/toast instead of alert() is better practice
+        console.error('There was an error submitting your answer. Please try again.', e); 
       });
   };
 }
-
-// Export the function using the expected name as an alias for backward compatibility with components.
-export { handleSaveQuestionAnswer as handleAddAnswer };
