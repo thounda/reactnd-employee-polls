@@ -1,31 +1,30 @@
 /**
  * File: src/components/RequireAuth.js
- * Description: A wrapper component that protects routes, forcing unauthorized users
- * to the login page and saving their intended destination for redirection after login.
+ * Description: A component used for client-side routing protection.
+ * If a user is not authenticated, they are redirected to the /login page,
+ * with the intended destination saved in the router state.
  */
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 /**
- * @description Renders the nested route children if the user is authenticated;
- * otherwise, redirects the user to the login page.
- * @returns {JSX.Element}
+ * @description Protects child routes, redirecting unauthenticated users to the login page.
+ * @returns {React.ReactNode} The Outlet (nested routes) if authenticated, or a Navigate component.
  */
 function RequireAuth() {
   // Get the authenticated user ID from the Redux store
   const authedUser = useSelector((state) => state.authedUser);
+  
+  // Get the current location object to pass the intended path to the login screen
   const location = useLocation();
 
-  if (authedUser === null) {
-    // If not authenticated, redirect them to the /login page.
-    // The 'replace' prop ensures the login page replaces the failed page in history.
-    // The 'state' prop saves the current location, allowing the Login component 
-    // to redirect them back here after a successful login.
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  if (!authedUser) {
+    // Redirect to the login page, passing the current path in the state
+    return <Navigate to="/login" state={{ path: location.pathname }} replace />;
   }
 
-  // If authenticated, render the child routes (e.g., Dashboard, Leaderboard)
+  // If authenticated, render the child routes (Dashboard, NewPoll, etc.)
   return <Outlet />;
 }
 
