@@ -5,7 +5,8 @@
 import {
   RECEIVE_QUESTIONS,
   ADD_QUESTION,
-  ADD_ANSWER_TO_QUESTION,
+  // FIX: Action type renamed to ADD_QUESTION_ANSWER
+  ADD_QUESTION_ANSWER, 
 } from '../actions/questions.js';
 
 /**
@@ -22,7 +23,8 @@ export default function questions(state = {}, action) {
         ...action.questions,
       };
       
-    case ADD_ANSWER_TO_QUESTION:
+    // FIX: Updated case name to match the new action type
+    case ADD_QUESTION_ANSWER:
       const { qid, answer, authedUser } = action;
 
       // Update the specific question object with the new vote

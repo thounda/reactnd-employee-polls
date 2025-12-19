@@ -1,9 +1,9 @@
 /**
- * This file simulates a backend database for the Employee Polls application.
+ * @description This file simulates a backend database for the Employee Polls application.
  * It provides methods to fetch users, fetch questions, save new questions,
  * and save answers to questions.
  *
- * NOTE: This file uses the provided starter data structure.
+ * NOTE: This uses static data. The avatarURL paths assume images are located in the /public/avatars folder.
  */
 
 let users = {
@@ -140,18 +140,60 @@ function generateUID() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
+/**
+ * @description Simple sanitization function to remove or encode potentially malicious HTML/scripts.
+ * This simulates a secure backend behavior.
+ * @param {string} input - The raw user input string.
+ * @returns {string} The sanitized string.
+ */
+function sanitizeInput(input) {
+  if (!input) return '';
+  // Simple regex to remove script tags and common event handlers
+  let sanitized = input.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
+  // Encode other potentially dangerous characters
+  sanitized = sanitized.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;')
+                       .replace(/"/g, '&quot;')
+                       .replace(/'/g, '&#x27;');
+  return sanitized.trim();
+}
+
 // --- API FUNCTIONS ---
 
-function _getUsers() {
+/**
+ * @description Simulates fetching all user records from the database.
+ * @returns {Promise<Object>} Object containing all user records.
+ */
+export function _getUsers() {
   return new Promise((resolve) => {
     setTimeout(() => resolve({...users}), 1000)
   })
 }
 
-function _getQuestions() {
+/**
+ * @description Simulates fetching all question records from the database.
+ * @returns {Promise<Object>} Object containing all question records.
+ */
+export function _getQuestions() {
   return new Promise((resolve) => {
     setTimeout(() => resolve({...questions}), 1000)
   })
+}
+
+/**
+ * @description Fetches all users and all questions in a single promise chain.
+ * This is the function called by the initial data action creator.
+ * @returns {Promise<{users: Object, questions: Object}>}
+ */
+export function getInitialData() {
+  return Promise.all([
+    _getUsers(),
+    _getQuestions(),
+  ]).then(([users, questions]) => ({
+    users,
+    questions,
+  }));
 }
 
 function formatQuestion({
@@ -165,23 +207,32 @@ function formatQuestion({
     author,
     optionOne: {
       votes: [],
-      text: optionOneText,
+      // SANITIZE INPUT before formatting
+      text: sanitizeInput(optionOneText),
     },
     optionTwo: {
       votes: [],
-      text: optionTwoText,
+      // SANITIZE INPUT before formatting
+      text: sanitizeInput(optionTwoText),
     }
   }
 }
 
-function _saveQuestion(question) {
+/**
+ * @description Saves a new question to the database and updates the user who posted it.
+ * @param {Object} question - Object containing optionOneText, optionTwoText, and author.
+ * @returns {Promise<Object>} The newly formatted question object.
+ */
+export function _saveQuestion(question) {
   return new Promise((resolve, reject) => {
     if (!question.optionOneText || !question.optionTwoText || !question.author) {
       reject("Please provide optionOneText, optionTwoText, and author");
     }
 
     const authedUser = question.author;
-    const formattedQuestion = formatQuestion(question)
+    // The formatQuestion call now internally sanitizes the text
+    const formattedQuestion = formatQuestion(question) 
+    
     setTimeout(() => {
       // 1. Update questions
       questions = {
@@ -203,7 +254,12 @@ function _saveQuestion(question) {
   })
 }
 
-function _saveQuestionAnswer({
+/**
+ * @description Saves a user's answer to a question.
+ * @param {Object} info - Object containing authedUser, qid (question ID), and answer (optionOne or optionTwo).
+ * @returns {Promise<boolean>}
+ */
+export function _saveQuestionAnswer({
   authedUser,
   qid,
   answer
@@ -214,7 +270,7 @@ function _saveQuestionAnswer({
     }
 
     setTimeout(() => {
-      // 1. Update users (Your original logic)
+      // 1. Update users
       users = {
         ...users,
         [authedUser]: {
@@ -226,7 +282,7 @@ function _saveQuestionAnswer({
         }
       }
 
-      // 2. Update questions (Your original logic)
+      // 2. Update questions
       questions = {
         ...questions,
         [qid]: {
@@ -242,11 +298,3 @@ function _saveQuestionAnswer({
     }, 500)
   })
 }
-
-// Consolidate exports for better module resolution compatibility
-export {
-  _getUsers,
-  _getQuestions,
-  _saveQuestion,
-  _saveQuestionAnswer
-};
