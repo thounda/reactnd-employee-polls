@@ -10,13 +10,13 @@ import { Routes, Route } from 'react-router-dom';
 import usePollData from './hooks/usePollData.js'; 
 
 // Components
-import NavBar from './components/NavBar.js'; // <-- Corrected: Using NavBar
+import NavBar from './components/NavBar.js';
 import Login from './components/Login.js';
 import RequireAuth from './components/RequireAuth.js';
 import Dashboard from './components/Dashboard.js';
 import NewPoll from './components/NewPoll.js';
 import Leaderboard from './components/Leaderboard.js';
-import PollDetail from './components/PollDetail.js';
+import QuestionPage from './components/QuestionPage.js'; // <-- FIXED: Changed from PollDetail
 import NotFound from './components/NotFound.js';
 
 function App() {
@@ -33,10 +33,8 @@ function App() {
     );
   }
 
-  // NOTE: The <Router> component was removed as it is defined in src/main.js
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Navigation Bar component */}
       <NavBar /> 
 
       <main className="flex-grow p-4 md:p-8">
@@ -46,15 +44,18 @@ function App() {
 
           {/* 2. Protected Routes Group */}
           <Route element={<RequireAuth />}>
-            {/* The default path is the Dashboard */}
             <Route path="/" element={<Dashboard />} />
             <Route path="/add" element={<NewPoll />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
-            {/* Dynamic route for viewing poll details */}
-            <Route path="/questions/:question_id" element={<PollDetail />} />
+            
+            {/* FIXED: 
+              1. Parameter name changed to :qid to match useParams() in QuestionPage.js
+              2. Component changed to QuestionPage
+            */}
+            <Route path="/questions/:qid" element={<QuestionPage />} />
           </Route>
 
-          {/* 3. 404 Route - Catch all other unknown paths */}
+          {/* 3. 404 Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

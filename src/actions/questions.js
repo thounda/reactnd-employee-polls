@@ -1,15 +1,14 @@
 /**
  * File: src/actions/questions.js
- * Description: Action creators and thunks for managing question data (fetching, adding, answering).
+ * Description: Action creators and Thunks for questions (loading, adding new, and voting).
  */
-import { showLoading, hideLoading } from 'react-redux-loading-bar';
-import { _saveQuestionAnswer, _saveQuestion } from '../utils/_DATA.js'; // API helper
+import { saveQuestion, saveQuestionAnswer } from '../utils/api.js';
+import { addUserQuestion, addUserAnswer } from './users.js';
 
-// Action Type Constants
+// Action Types
 export const RECEIVE_QUESTIONS = 'RECEIVE_QUESTIONS';
 export const ADD_QUESTION = 'ADD_QUESTION';
-export const ADD_ANSWER_TO_QUESTION = 'ADD_ANSWER_TO_QUESTION';
-export const ADD_QUESTION_TO_USER = 'ADD_QUESTION_TO_USER'; // New: To update the user's list of created questions
+export const ADD_QUESTION_ANSWER = 'ADD_QUESTION_ANSWER'; // Action type for voting
 
 // -----------------------------------------------------------------------------
 // Action Creators
@@ -22,90 +21,81 @@ export function receiveQuestions(questions) {
   };
 }
 
-export function addAnswerToQuestion({ authedUser, qid, answer }) {
-  return {
-    type: ADD_ANSWER_TO_QUESTION,
-    authedUser,
-    qid,
-    answer,
-  };
-}
-
-export function addQuestion(question) {
+/**
+ * Action creator for adding a new question to the store.
+ * (Used by handleAddQuestion thunk)
+ */
+function addQuestion(question) {
   return {
     type: ADD_QUESTION,
     question,
   };
 }
 
-export function addQuestionToUser({ author, id }) {
+/**
+ * Action creator for recording a user's answer in the questions slice of state.
+ * (Used by handleAddAnswer thunk)
+ */
+function addQuestionAnswer({ authedUser, qid, answer }) {
   return {
-    type: ADD_QUESTION_TO_USER,
-    author,
-    id,
+    type: ADD_QUESTION_ANSWER,
+    authedUser,
+    qid,
+    answer,
   };
 }
-
 
 // -----------------------------------------------------------------------------
 // Thunks
 // -----------------------------------------------------------------------------
 
 /**
- * Redux Thunk to handle saving a user's answer to a question.
- * (This is your existing, correct logic)
- */
-export function handleSaveQuestionAnswer(authedUser, qid, answer) {
-  return (dispatch) => {
-    dispatch(showLoading());
-
-    const answerInfo = { authedUser, qid, answer };
-
-    dispatch(addAnswerToQuestion(answerInfo));
-
-    return _saveQuestionAnswer(answerInfo)
-      .then(() => {
-        dispatch(hideLoading());
-      })
-      .catch((e) => {
-        console.error('Error saving question answer: ', e);
-        dispatch(hideLoading()); 
-        console.error('There was an error submitting your answer. Please try again.', e); 
-      });
-  };
-}
-
-
-/**
- * Redux Thunk to handle creating and saving a new question (poll).
- * @param {string} optionOneText - Text for the first option.
- * @param {string} optionTwoText - Text for the second option.
- * @returns {Function} A Redux Thunk function.
+ * ASYNC THUNK: Handles saving a new question to the API and updating the Redux store.
  */
 export function handleAddQuestion(optionOneText, optionTwoText) {
   return (dispatch, getState) => {
     const { authedUser } = getState();
 
-    dispatch(showLoading());
-    
-    // Call the API to save the new question
-    return _saveQuestion({
+    const question = {
       optionOneText,
       optionTwoText,
       author: authedUser,
-    })
-      .then((question) => {
-        // 1. Add the question to the global questions slice
-        dispatch(addQuestion(question));
-        // 2. Add the question ID to the user's created questions list
-        dispatch(addQuestionToUser({ author: authedUser, id: question.id }));
-        dispatch(hideLoading());
+    };
+
+    return saveQuestion(question)
+      .then((formattedQuestion) => {
+        dispatch(addQuestion(formattedQuestion));
+        dispatch(addUserQuestion(formattedQuestion));
       })
-      .catch((e) => {
-        console.error('Error adding new question: ', e);
-        dispatch(hideLoading());
-        // Note: Using a custom modal/toast instead of alert() is better practice
-        alert('There was an error creating the poll. Please try again.');
+      .catch((error) => {
+        console.error('Error in handleAddQuestion:', error);
+        alert('There was an error saving your new poll. Please try again.');
+      });
+  };
+}
+
+/**
+ * ASYNC THUNK: Handles saving an answer to the API and updating the Redux store.
+ * This is the crucial function that was likely missing before.
+ */
+export function handleAddAnswer(qid, answer) {
+  return (dispatch, getState) => {
+    const { authedUser } = getState();
+    
+    const info = {
+      authedUser,
+      qid,
+      answer,
+    };
+
+    // Optimistically dispatch updates to the store
+    dispatch(addQuestionAnswer(info));
+    dispatch(addUserAnswer(info));
+
+    return saveQuestionAnswer(info)
+      .catch((error) => {
+        console.error('Error in handleAddAnswer:', error);
+        alert('There was an error submitting your vote. Please try again.');
       });
   };
 }
