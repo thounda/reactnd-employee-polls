@@ -1,9 +1,6 @@
 /**
+ * FILE: src/utils/_DATA.js
  * @description This file simulates a backend database for the Employee Polls application.
- * It provides methods to fetch users, fetch questions, save new questions,
- * and save answers to questions.
- *
- * NOTE: This uses static data. The avatarURL paths assume images are located in the /public/avatars folder.
  */
 
 let users = {
@@ -140,17 +137,9 @@ function generateUID() {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
 }
 
-/**
- * @description Simple sanitization function to remove or encode potentially malicious HTML/scripts.
- * This simulates a secure backend behavior.
- * @param {string} input - The raw user input string.
- * @returns {string} The sanitized string.
- */
 function sanitizeInput(input) {
   if (!input) return '';
-  // Simple regex to remove script tags and common event handlers
   let sanitized = input.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, '');
-  // Encode other potentially dangerous characters
   sanitized = sanitized.replace(/&/g, '&amp;')
                        .replace(/</g, '&lt;')
                        .replace(/>/g, '&gt;')
@@ -159,33 +148,18 @@ function sanitizeInput(input) {
   return sanitized.trim();
 }
 
-// --- API FUNCTIONS ---
-
-/**
- * @description Simulates fetching all user records from the database.
- * @returns {Promise<Object>} Object containing all user records.
- */
 export function _getUsers() {
   return new Promise((resolve) => {
-    setTimeout(() => resolve({...users}), 1000)
+    setTimeout(() => resolve({...users}), 500)
   })
 }
 
-/**
- * @description Simulates fetching all question records from the database.
- * @returns {Promise<Object>} Object containing all question records.
- */
 export function _getQuestions() {
   return new Promise((resolve) => {
-    setTimeout(() => resolve({...questions}), 1000)
+    setTimeout(() => resolve({...questions}), 500)
   })
 }
 
-/**
- * @description Fetches all users and all questions in a single promise chain.
- * This is the function called by the initial data action creator.
- * @returns {Promise<{users: Object, questions: Object}>}
- */
 export function getInitialData() {
   return Promise.all([
     _getUsers(),
@@ -196,51 +170,37 @@ export function getInitialData() {
   }));
 }
 
-function formatQuestion({
-  optionOneText,
-  optionTwoText,
-  author
-}) {
+function formatQuestion({ optionOneText, optionTwoText, author }) {
   return {
     id: generateUID(),
     timestamp: Date.now(),
     author,
     optionOne: {
       votes: [],
-      // SANITIZE INPUT before formatting
       text: sanitizeInput(optionOneText),
     },
     optionTwo: {
       votes: [],
-      // SANITIZE INPUT before formatting
       text: sanitizeInput(optionTwoText),
     }
   }
 }
 
-/**
- * @description Saves a new question to the database and updates the user who posted it.
- * @param {Object} question - Object containing optionOneText, optionTwoText, and author.
- * @returns {Promise<Object>} The newly formatted question object.
- */
 export function _saveQuestion(question) {
   return new Promise((resolve, reject) => {
     if (!question.optionOneText || !question.optionTwoText || !question.author) {
       reject("Please provide optionOneText, optionTwoText, and author");
+      return;
     }
 
     const authedUser = question.author;
-    // The formatQuestion call now internally sanitizes the text
     const formattedQuestion = formatQuestion(question) 
     
     setTimeout(() => {
-      // 1. Update questions
       questions = {
         ...questions,
         [formattedQuestion.id]: formattedQuestion
       }
-
-      // 2. Update users (Crucial addition to keep the "database" in sync)
       users = {
         ...users,
         [authedUser]: {
@@ -248,29 +208,19 @@ export function _saveQuestion(question) {
           questions: users[authedUser].questions.concat([formattedQuestion.id]),
         }
       }
-
       resolve(formattedQuestion)
-    }, 1000)
+    }, 500)
   })
 }
 
-/**
- * @description Saves a user's answer to a question.
- * @param {Object} info - Object containing authedUser, qid (question ID), and answer (optionOne or optionTwo).
- * @returns {Promise<boolean>}
- */
-export function _saveQuestionAnswer({
-  authedUser,
-  qid,
-  answer
-}) {
+export function _saveQuestionAnswer({ authedUser, qid, answer }) {
   return new Promise((resolve, reject) => {
     if (!authedUser || !qid || !answer) {
       reject("Please provide authedUser, qid, and answer");
+      return;
     }
 
     setTimeout(() => {
-      // 1. Update users
       users = {
         ...users,
         [authedUser]: {
@@ -281,8 +231,6 @@ export function _saveQuestionAnswer({
           }
         }
       }
-
-      // 2. Update questions
       questions = {
         ...questions,
         [qid]: {
@@ -293,7 +241,6 @@ export function _saveQuestionAnswer({
           }
         }
       }
-
       resolve(true)
     }, 500)
   })
