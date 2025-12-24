@@ -1,116 +1,131 @@
 /**
  * File: src/components/Login.js
- * Description: Component for the application's login screen. Allows the user
- * to select an existing user from a dropdown to log in.
+ * Description: 
+ * Provides a user interface for selecting a user from the mock database
+ * and setting them as the 'authedUser' in the Redux state.
+ * * Fixes applied:
+ * 1. Resolved 'react-redux' dependency mapping.
+ * 2. Updated import path for 'setAuthedUser' to match our Redux Toolkit store structure.
  */
-import React, { Component } from 'react';
-import { connect } from 'react-redux';
-import { handleSetAuthedUser } from '../actions/authedUser.js';
-import { Navigate } from 'react-router-dom';
 
-class Login extends Component {
-  state = {
-    userId: '',
-    toHome: false, // Flag to indicate successful login and redirect
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { setAuthedUser } from '../store/index'; // Updated path to the RTK store export
+
+const Login = () => {
+  const dispatch = useDispatch();
+  
+  // Access users from state.users as defined in our store/index.ts slices
+  const users = useSelector((state) => state.users);
+  const userIds = Object.keys(users || {});
+
+  const [selectedUser, setSelectedUser] = useState('');
+
+  const handleChange = (e) => {
+    setSelectedUser(e.target.value);
   };
 
-  /**
-   * Handles changes in the dropdown selection.
-   * @param {Object} e - The change event object.
-   */
-  handleChange = (e) => {
-    const userId = e.target.value;
-    this.setState(() => ({
-      userId,
-    }));
-  };
-
-  /**
-   * Handles the submission of the login form.
-   * @param {Object} e - The form submission event object.
-   */
-  handleSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    const { userId } = this.state;
-    const { dispatch } = this.props;
-
-    if (userId !== '') {
-      // Dispatch the thunk action to set the authenticated user and hide loading bar
-      dispatch(handleSetAuthedUser(userId));
-      
-      this.setState(() => ({
-        toHome: true, // Set flag to redirect to the home page
-      }));
-    } else {
-      console.log('Login failed: Please select a user.');
+    if (selectedUser) {
+      dispatch(setAuthedUser(selectedUser));
     }
   };
 
-  render() {
-    const { users } = this.props;
-    const { userId, toHome } = this.state;
-    
-    // Redirect to the home page ('/') after successful login
-    if (toHome === true) {
-      return <Navigate to="/" />;
-    }
-
-    return (
-      <div className="flex justify-center items-center mt-10">
-        <div className="bg-white shadow-xl rounded-lg p-8 w-full max-w-sm border border-gray-200">
-          <header className="text-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-800">Welcome to 'Would You Rather?'</h3>
-            <p className="text-sm text-gray-500 mt-1">Please sign in to continue.</p>
-          </header>
-
-          <form onSubmit={this.handleSubmit} className="space-y-6">
-            <div className="text-center">
-              <h4 className="text-lg font-medium text-indigo-600 mb-3">Sign In</h4>
-              
-              <select
-                className="w-full p-3 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition duration-150 ease-in-out"
-                value={userId}
-                onChange={this.handleChange}
-                data-testid="user-select"
-              >
-                <option value="" disabled>
-                  Select User
-                </option>
-                {/* Map over the users prop to create dropdown options */}
-                {Object.keys(users).map((id) => (
-                  <option key={id} value={id}>
-                    {users[id].name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out disabled:opacity-50"
-              disabled={userId === ''}
-              data-testid="login-button"
-            >
-              Sign In
-            </button>
-          </form>
-        </div>
+  return (
+    <div className="login-container" style={styles.container}>
+      <div className="login-box" style={styles.box}>
+        <h1 style={styles.title}>Employee Polls</h1>
+        <h2 style={styles.subtitle}>Please sign in to continue</h2>
+        
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <label htmlFor="user-select" style={styles.label}>Select User</label>
+          <select 
+            id="user-select"
+            value={selectedUser} 
+            onChange={handleChange}
+            style={styles.select}
+            data-testid="user-select"
+          >
+            <option value="" disabled>-- Choose a User --</option>
+            {userIds.map((id) => (
+              <option key={id} value={id}>
+                {users[id].name}
+              </option>
+            ))}
+          </select>
+          
+          <button 
+            type="submit" 
+            disabled={selectedUser === ''}
+            style={selectedUser === '' ? {...styles.button, ...styles.disabled} : styles.button}
+            data-testid="login-submit"
+          >
+            Login
+          </button>
+        </form>
       </div>
-    );
+    </div>
+  );
+};
+
+const styles = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '80vh',
+    padding: '20px',
+  },
+  box: {
+    width: '100%',
+    maxWidth: '400px',
+    padding: '40px',
+    border: '1px solid #ddd',
+    borderRadius: '8px',
+    textAlign: 'center',
+    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+    backgroundColor: '#fff',
+  },
+  title: {
+    margin: '0 0 10px 0',
+    color: '#333',
+  },
+  subtitle: {
+    fontSize: '1rem',
+    color: '#666',
+    marginBottom: '30px',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    textAlign: 'left',
+  },
+  label: {
+    marginBottom: '8px',
+    fontWeight: 'bold',
+  },
+  select: {
+    padding: '10px',
+    fontSize: '1rem',
+    borderRadius: '4px',
+    border: '1px solid #ccc',
+    marginBottom: '20px',
+  },
+  button: {
+    padding: '12px',
+    fontSize: '1rem',
+    backgroundColor: '#007bff',
+    color: 'white',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+  },
+  disabled: {
+    backgroundColor: '#ccc',
+    cursor: 'not-allowed',
   }
-}
+};
 
-/**
- * Maps the users slice of state to props, allowing the component to list users.
- * @param {Object} state - The Redux store state.
- * @returns {Object} The users object.
- */
-function mapStateToProps({ users }) {
-  return {
-    users,
-  };
-}
-
-// Connect the component to the Redux store
-export default connect(mapStateToProps)(Login);
+export default Login;

@@ -1,113 +1,99 @@
 /**
  * File: src/components/Leaderboard.js
- * Description: A React component that renders a high-performance, responsive 
- * leaderboard table for the "Would You Rather" application. It calculates 
- * user scores based on questions created and polls answered, sorts them 
- * descending, and displays them with custom branding.
- * * Features:
- * - Decoupled logic for modular imports.
- * - Explicit 'id: ' prefix for user identifiers.
- * - Dynamic ranking styles for top 3 positions.
- * - Robust avatar rendering with DiceBear fallbacks.
+ * Description: 
+ * Displays a ranked list of users based on their activity.
+ * * Logic:
+ * 1. Ranking: Sum of answered questions and created questions.
+ * 2. Sorting: Users are sorted in descending order based on the total score.
+ * 3. UI: Premium card layout with clear metrics for each user.
+ * 4. Highlighting: Top 3 users get visual badges (Gold, Silver, Bronze style).
+ * * Fixes applied:
+ * - Resolved 'react-redux' dependency mapping issues by ensuring standard import compatibility.
  */
 
 import React from 'react';
+import { useSelector } from 'react-redux';
 
-const Leaderboard = ({ users = {} }) => {
-  // Sort users based on total activity: sum of answers and questions
-  const sortedUsers = Object.values(users).sort((a, b) => {
-    const aTotal = Object.keys(a.answers).length + a.questions.length;
-    const bTotal = Object.keys(b.answers).length + b.questions.length;
-    return bTotal - aTotal;
-  });
+const Leaderboard = () => {
+  // Access users from our Redux state
+  const users = useSelector((state) => state.users);
 
-  // Helper to apply specific thematic styling to the top 3 leaderboard spots
-  const getRankStyle = (index) => {
-    switch (index) {
-      case 0: return "bg-yellow-50 border-yellow-200 text-yellow-700"; // Gold
-      case 1: return "bg-slate-50 border-slate-200 text-slate-500";   // Silver
-      case 2: return "bg-orange-50 border-orange-200 text-orange-700"; // Bronze
-      default: return "bg-white border-gray-100 text-gray-400";
-    }
-  };
+  // Transform user object into a sorted array based on activity
+  const sortedUsers = Object.values(users || {})
+    .map((user) => ({
+      id: user.id,
+      name: user.name,
+      avatarURL: user.avatarURL,
+      answeredCount: Object.keys(user.answers || {}).length,
+      createdCount: (user.questions || []).length,
+      total: Object.keys(user.answers || {}).length + (user.questions || []).length,
+    }))
+    .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
-      {/* Header Section */}
-      <div className="p-8 border-b border-gray-50 bg-gray-50/50">
-        <h2 className="text-2xl font-black text-gray-800 uppercase tracking-tight">
-          Global Rankings
-        </h2>
+    <div className="max-w-4xl mx-auto p-4 sm:p-8">
+      <div className="mb-10 text-center sm:text-left">
+        <h1 className="text-4xl font-black text-gray-900 tracking-tight">Leaderboard</h1>
+        <p className="text-gray-500 mt-2 text-lg">Recognizing our most active community contributors.</p>
       </div>
-      
-      {/* Scrollable Table Wrapper for Mobile Support */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-[0.2em] text-gray-400 border-b border-gray-50">
-              <th className="px-8 py-4 font-bold text-center w-20">Rank</th>
-              <th className="px-8 py-4 font-bold">User Information</th>
-              <th className="px-8 py-4 font-bold text-center">Answered</th>
-              <th className="px-8 py-4 font-bold text-center">Created</th>
-              <th className="px-8 py-4 font-bold text-right">Total Score</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50">
-            {sortedUsers.map((user, index) => {
-              const answeredCount = Object.keys(user.answers).length;
-              const createdCount = user.questions.length;
-              const totalScore = answeredCount + createdCount;
 
-              return (
-                <tr key={user.id} className="group hover:bg-indigo-50/30 transition-colors">
-                  {/* Rank Indicator */}
-                  <td className="px-8 py-6 text-center">
-                    <div className={`inline-flex items-center justify-center w-8 h-8 rounded-full border text-xs font-black shadow-sm mx-auto ${getRankStyle(index)}`}>
-                      {index + 1}
-                    </div>
-                  </td>
+      <div className="grid gap-8">
+        {sortedUsers.map((user, index) => (
+          <div 
+            key={user.id} 
+            className="bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col sm:flex-row items-center p-8 gap-8 relative group"
+          >
+            {/* Rank Badge */}
+            <div className={`absolute top-0 left-0 w-14 h-14 flex items-center justify-center font-black text-white rounded-br-2xl shadow-lg transition-transform group-hover:scale-110 ${
+              index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500' : 
+              index === 1 ? 'bg-gradient-to-br from-gray-200 to-gray-400' : 
+              index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-500' : 'bg-blue-50 text-blue-600 shadow-none'
+            }`}>
+              {index + 1}
+            </div>
 
-                  {/* Identity Column */}
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-4">
-                      <img 
-                        src={user.avatarURL} 
-                        alt={user.name} 
-                        className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md"
-                        onError={(e) => {
-                          e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.name}`;
-                        }}
-                      />
-                      <div>
-                        <div className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">{user.name}</div>
-                        {/* Requirement: Prepend 'id: ' to the ID string */}
-                        <div className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
-                          id: {user.id}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
+            {/* Avatar Section */}
+            <div className="flex-shrink-0">
+              <img 
+                src={user.avatarURL} 
+                alt={user.name} 
+                className="w-28 h-28 rounded-3xl object-cover ring-8 ring-gray-50 group-hover:ring-blue-50 transition-all shadow-md"
+              />
+            </div>
 
-                  {/* Metrics Columns */}
-                  <td className="px-8 py-6 text-center font-bold text-gray-600">
-                    {answeredCount}
-                  </td>
-                  <td className="px-8 py-6 text-center font-bold text-gray-600">
-                    {createdCount}
-                  </td>
+            {/* Info Section */}
+            <div className="flex-grow text-center sm:text-left">
+              <h2 className="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{user.name}</h2>
+              <p className="text-gray-400 text-sm font-bold uppercase tracking-[0.2em] mt-1">@{user.id}</p>
+            </div>
 
-                  {/* Score Column */}
-                  <td className="px-8 py-6 text-right">
-                    <span className="inline-block px-4 py-1 rounded-full bg-indigo-600 text-white text-sm font-black shadow-lg shadow-indigo-200">
-                      {totalScore}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+            {/* Stats Grid */}
+            <div className="flex flex-wrap justify-center gap-6 sm:gap-10 border-t sm:border-t-0 sm:border-l border-gray-100 pt-8 sm:pt-0 sm:pl-10">
+              <div className="text-center">
+                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">Answered</p>
+                <p className="text-2xl font-black text-gray-800">{user.answeredCount}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">Created</p>
+                <p className="text-2xl font-black text-gray-800">{user.createdCount}</p>
+              </div>
+              <div className="text-center bg-blue-600 px-8 py-3 rounded-2xl shadow-lg shadow-blue-100 transform group-hover:scale-105 transition-transform">
+                <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1">Score</p>
+                <p className="text-3xl font-black text-white">{user.total}</p>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {sortedUsers.length === 0 && (
+        <div className="text-center py-32 bg-white border-2 border-dashed border-gray-100 rounded-[3rem]">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+             <svg className="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+          </div>
+          <p className="text-gray-400 font-bold text-xl">Waiting for participants...</p>
+        </div>
+      )}
     </div>
   );
 };
