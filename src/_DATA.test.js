@@ -1,64 +1,73 @@
 /**
- * FILE: src/_DATA.test.js
- * * DESCRIPTION:
- * This file contains unit tests for the data layer logic in _DATA.js. 
- * It verifies that:
- * 1. _saveQuestion returns a correctly formatted question object with valid inputs.
- * 2. _saveQuestion rejects with an error message when required fields are missing.
- * 3. _saveQuestionAnswer returns true when a valid answer is submitted.
- * 4. _saveQuestionAnswer rejects with an error message when the payload is incomplete.
- * * These tests ensure the reliability of the application's data manipulation functions.
+ * File: src/_DATA.test.js
+ * Description: 
+ * Unit tests for the mock database functions provided in _DATA.js.
+ * Includes tests for _saveQuestion and _saveQuestionAnswer.
  */
 
 import { describe, it, expect } from 'vitest';
 import { _saveQuestion, _saveQuestionAnswer } from './utils/_DATA';
 
 describe('_saveQuestion', () => {
-    it('should return the formatted question and all expected fields when correctly formatted data is passed', async () => {
-        const mockQuestion = {
-            optionOneText: 'Eat an apple',
-            optionTwoText: 'Eat an orange',
-            author: 'sarahedo'
-        };
-        const result = await _saveQuestion(mockQuestion);
-        
-        expect(result.author).toEqual('sarahedo');
-        expect(result.optionOne.text).toEqual('Eat an apple');
-        expect(result.optionTwo.text).toEqual('Eat an orange');
-        expect(result.id).toBeDefined();
-        expect(result.timestamp).toBeDefined();
-    }, 10000); 
+  it('should return the saved question and update the database when valid data is passed', async () => {
+    const validQuestion = {
+      optionOneText: 'Write Integration Tests',
+      optionTwoText: 'Write Unit Tests',
+      author: 'sarahedo',
+    };
+    
+    const result = await _saveQuestion(validQuestion);
+    
+    // Check returned object structure
+    expect(result).toHaveProperty('id');
+    expect(result).toHaveProperty('timestamp');
+    expect(result.author).toBe('sarahedo');
+    expect(result.optionOne.text).toBe('Write Integration Tests');
+    expect(result.optionTwo.text).toBe('Write Unit Tests');
+    expect(Array.isArray(result.optionOne.votes)).toBe(true);
+  });
 
-    it('should return an error if incorrect data is passed to the function', async () => {
-        const incompleteQuestion = {
-            optionOneText: 'Missing other fields',
-            author: 'sarahedo'
-        };
-        await expect(_saveQuestion(incompleteQuestion)).rejects.toEqual(
-            'Please provide optionOneText, optionTwoText, and author'
-        );
-    });
+  it('should return an error if missing fields are passed', async () => {
+    const invalidQuestion = {
+      optionOneText: 'Missing other fields',
+      // author and optionTwoText are missing
+    };
+    
+    await expect(_saveQuestion(invalidQuestion)).rejects.toEqual(
+      'Please provide optionOneText, optionTwoText, and author'
+    );
+  });
 });
 
 describe('_saveQuestionAnswer', () => {
-    it('should return true when correctly formatted data is passed', async () => {
-        const mockAnswer = {
-            authedUser: 'sarahedo',
-            qid: '8xf0y6ziyjabvozdd253nd',
-            answer: 'optionOne'
-        };
-        const result = await _saveQuestionAnswer(mockAnswer);
-        expect(result).toBe(true);
+  it('should return true and update state when valid answer data is passed', async () => {
+    // 1. Create a question first to ensure a valid qid exists in the local state
+    const newQuestion = await _saveQuestion({
+      optionOneText: 'Blue',
+      optionTwoText: 'Red',
+      author: 'mtsamis'
     });
 
-    it('should return an error if incorrect data is passed to the function', async () => {
-        const incompleteAnswer = {
-            authedUser: 'sarahedo',
-            qid: '8xf0y6ziyjabvozdd253nd'
-            // answer field is intentionally missing for this test case
-        };
-        await expect(_saveQuestionAnswer(incompleteAnswer)).rejects.toEqual(
-            'Please provide authedUser, qid, and answer'
-        );
-    });
+    const validPayload = {
+      authedUser: 'sarahedo',
+      qid: newQuestion.id,
+      answer: 'optionOne',
+    };
+    
+    // 2. Test the answer saving
+    const result = await _saveQuestionAnswer(validPayload);
+    expect(result).toBe(true);
+  });
+
+  it('should return an error if the answer payload is incomplete', async () => {
+    const invalidPayload = {
+      authedUser: 'sarahedo',
+      qid: 'any-id',
+      // answer field is missing
+    };
+    
+    await expect(_saveQuestionAnswer(invalidPayload)).rejects.toEqual(
+      'Please provide authedUser, qid, and answer'
+    );
+  });
 });
