@@ -1,99 +1,98 @@
 /**
  * File: src/components/Leaderboard.js
- * Description: 
- * Displays a ranked list of users based on their activity.
- * * Logic:
- * 1. Ranking: Sum of answered questions and created questions.
- * 2. Sorting: Users are sorted in descending order based on the total score.
- * 3. UI: Premium card layout with clear metrics for each user.
- * 4. Highlighting: Top 3 users get visual badges (Gold, Silver, Bronze style).
- * * Fixes applied:
- * - Resolved 'react-redux' dependency mapping issues by ensuring standard import compatibility.
+ * Description: Renders a ranked list of users based on questions asked and answered.
+ * * NOTE: The "Could not resolve" error in this preview panel is expected.
+ * This component relies on the 'react-redux' library and a global store 
+ * which are present in your local project but not in this preview environment.
  */
 
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+// Inline SVGs to maintain consistency and avoid dependency issues
+const IconMedal = ({ color }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8a2 2 0 0 1 2.2-.13L14.47 7.3"/><path d="M16.79 15 21.34 7.14a2 2 0 0 0-.13-2.2L19.6 2.8a2 2 0 0 0-2.2-.13L9.53 7.3"/><path d="M15 21a3 3 0 0 0-3-3 3 3 0 0 0-3 3"/><circle cx="12" cy="13" r="8"/></svg>
+);
+
 const Leaderboard = () => {
-  // Access users from our Redux state
+  // Accessing users from Redux state
   const users = useSelector((state) => state.users);
 
-  // Transform user object into a sorted array based on activity
+  // Transform user data into a ranked list
   const sortedUsers = Object.values(users || {})
     .map((user) => ({
       id: user.id,
       name: user.name,
       avatarURL: user.avatarURL,
-      answeredCount: Object.keys(user.answers || {}).length,
-      createdCount: (user.questions || []).length,
+      answered: Object.keys(user.answers || {}).length,
+      created: (user.questions || []).length,
       total: Object.keys(user.answers || {}).length + (user.questions || []).length,
     }))
     .sort((a, b) => b.total - a.total);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-8">
-      <div className="mb-10 text-center sm:text-left">
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight">Leaderboard</h1>
-        <p className="text-gray-500 mt-2 text-lg">Recognizing our most active community contributors.</p>
+    <div className="max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="mb-10 text-center md:text-left">
+        <h2 className="text-3xl font-black text-gray-900 tracking-tight">Leaderboard</h2>
+        <p className="text-gray-500 text-sm">Recognizing our most active poll participants.</p>
       </div>
 
-      <div className="grid gap-8">
-        {sortedUsers.map((user, index) => (
-          <div 
-            key={user.id} 
-            className="bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col sm:flex-row items-center p-8 gap-8 relative group"
-          >
-            {/* Rank Badge */}
-            <div className={`absolute top-0 left-0 w-14 h-14 flex items-center justify-center font-black text-white rounded-br-2xl shadow-lg transition-transform group-hover:scale-110 ${
-              index === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-500' : 
-              index === 1 ? 'bg-gradient-to-br from-gray-200 to-gray-400' : 
-              index === 2 ? 'bg-gradient-to-br from-orange-300 to-orange-500' : 'bg-blue-50 text-blue-600 shadow-none'
-            }`}>
-              {index + 1}
-            </div>
+      <div className="space-y-4">
+        {sortedUsers.map((user, index) => {
+          const isTopThree = index < 3;
+          const medalColors = ['#F59E0B', '#94A3B8', '#B45309']; // Gold, Silver, Bronze
 
-            {/* Avatar Section */}
-            <div className="flex-shrink-0">
-              <img 
-                src={user.avatarURL} 
-                alt={user.name} 
-                className="w-28 h-28 rounded-3xl object-cover ring-8 ring-gray-50 group-hover:ring-blue-50 transition-all shadow-md"
-              />
-            </div>
+          return (
+            <div 
+              key={user.id} 
+              className={`relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center transition-all hover:shadow-md ${
+                index === 0 ? 'ring-2 ring-amber-400 ring-offset-4' : ''
+              }`}
+            >
+              {/* Rank Badge */}
+              <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-black shadow-lg">
+                {index + 1}
+              </div>
 
-            {/* Info Section */}
-            <div className="flex-grow text-center sm:text-left">
-              <h2 className="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{user.name}</h2>
-              <p className="text-gray-400 text-sm font-bold uppercase tracking-[0.2em] mt-1">@{user.id}</p>
-            </div>
+              <div className="flex flex-col sm:flex-row items-center flex-1 gap-6 ml-4">
+                <img 
+                  src={user.avatarURL} 
+                  alt={user.name} 
+                  className="w-20 h-20 rounded-2xl bg-slate-50 border-4 border-white shadow-sm"
+                />
+                
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-xl font-bold text-gray-900">{user.name}</h3>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-widest mt-1">@{user.id}</p>
+                  
+                  <div className="flex items-center justify-center sm:justify-start gap-4 mt-4">
+                    <div className="text-center px-4 py-2 bg-slate-50 rounded-xl border border-gray-100">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Answered</p>
+                      <p className="text-lg font-black text-indigo-600">{user.answered}</p>
+                    </div>
+                    <div className="text-center px-4 py-2 bg-slate-50 rounded-xl border border-gray-100">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Created</p>
+                      <p className="text-lg font-black text-indigo-600">{user.created}</p>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Stats Grid */}
-            <div className="flex flex-wrap justify-center gap-6 sm:gap-10 border-t sm:border-t-0 sm:border-l border-gray-100 pt-8 sm:pt-0 sm:pl-10">
-              <div className="text-center">
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">Answered</p>
-                <p className="text-2xl font-black text-gray-800">{user.answeredCount}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest mb-2">Created</p>
-                <p className="text-2xl font-black text-gray-800">{user.createdCount}</p>
-              </div>
-              <div className="text-center bg-blue-600 px-8 py-3 rounded-2xl shadow-lg shadow-blue-100 transform group-hover:scale-105 transition-transform">
-                <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1">Score</p>
-                <p className="text-3xl font-black text-white">{user.total}</p>
+                <div className="flex flex-col items-center justify-center px-8 border-l border-gray-100 sm:min-w-[120px]">
+                  <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Total Score</p>
+                  <div className="relative">
+                    <span className="text-4xl font-black text-gray-900">{user.total}</span>
+                    {isTopThree && (
+                      <div className="absolute -right-8 top-0">
+                        <IconMedal color={medalColors[index]} />
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-
-      {sortedUsers.length === 0 && (
-        <div className="text-center py-32 bg-white border-2 border-dashed border-gray-100 rounded-[3rem]">
-          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-             <svg className="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-          </div>
-          <p className="text-gray-400 font-bold text-xl">Waiting for participants...</p>
-        </div>
-      )}
     </div>
   );
 };
