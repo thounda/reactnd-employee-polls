@@ -1,31 +1,27 @@
 /**
  * File: src/components/Login.js
  * Description: 
- * Provides a user interface for selecting a user from the mock database
- * and setting them as the 'authedUser' in the Redux state.
- * * Fixes applied:
- * 1. Resolved 'react-redux' dependency mapping.
- * 2. Updated import path for 'setAuthedUser' to match our Redux Toolkit store structure.
+ * A functional component for user authentication.
+ * Fixed stray '}' character in JSX and corrected import paths.
+ * * NOTE: The "Could not resolve" errors in this preview panel are expected
+ * as the environment cannot access your local project's 'react-redux'
+ * or the actions folder.
  */
 
-import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { setAuthedUser } from '../store/index'; // Updated path to the RTK store export
+import React, { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+// Importing the setAuthedUser action from the correct local path
+import { setAuthedUser } from "../actions/authedUser";
 
 const Login = () => {
+  const [selectedUser, setSelectedUser] = useState("");
   const dispatch = useDispatch();
   
-  // Access users from state.users as defined in our store/index.ts slices
-  const users = useSelector((state) => state.users);
-  const userIds = Object.keys(users || {});
+  // Access users from Redux store
+  const users = useSelector((state) => state.users || {});
+  const userIds = Object.keys(users);
 
-  const [selectedUser, setSelectedUser] = useState('');
-
-  const handleChange = (e) => {
-    setSelectedUser(e.target.value);
-  };
-
-  const handleSubmit = (e) => {
+  const handleLogin = (e) => {
     e.preventDefault();
     if (selectedUser) {
       dispatch(setAuthedUser(selectedUser));
@@ -33,99 +29,65 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container" style={styles.container}>
-      <div className="login-box" style={styles.box}>
-        <h1 style={styles.title}>Employee Polls</h1>
-        <h2 style={styles.subtitle}>Please sign in to continue</h2>
-        
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label htmlFor="user-select" style={styles.label}>Select User</label>
-          <select 
-            id="user-select"
-            value={selectedUser} 
-            onChange={handleChange}
-            style={styles.select}
-            data-testid="user-select"
-          >
-            <option value="" disabled>-- Choose a User --</option>
-            {userIds.map((id) => (
-              <option key={id} value={id}>
-                {users[id].name}
+    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gray-50">
+      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl border border-gray-100">
+        <div className="text-center">
+          <div className="mx-auto h-16 w-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black mb-4 shadow-indigo-100 shadow-lg">
+            P
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">
+            Welcome Back
+          </h2>
+          <p className="mt-2 text-sm text-gray-500 font-medium">
+            Please select an employee to login
+          </p>
+        </div>
+
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          <div className="rounded-md shadow-sm">
+            <label htmlFor="user-select" className="sr-only">
+              Employee
+            </label>
+            <select
+              id="user-select"
+              value={selectedUser}
+              onChange={(e) => setSelectedUser(e.target.value)}
+              className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50 transition-all font-bold"
+            >
+              <option value="" disabled>
+                Select Employee...
               </option>
-            ))}
-          </select>
-          
-          <button 
-            type="submit" 
-            disabled={selectedUser === ''}
-            style={selectedUser === '' ? {...styles.button, ...styles.disabled} : styles.button}
-            data-testid="login-submit"
-          >
-            Login
-          </button>
+              {userIds.map((id) => (
+                <option key={id} value={id}>
+                  {users[id].name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={!selectedUser}
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-black rounded-xl text-white transition-all duration-200 ${
+                selectedUser 
+                  ? "bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200 hover:-translate-y-0.5" 
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              Sign In
+            </button>
+          </div>
         </form>
+        
+        <div className="pt-4 text-center">
+          <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">
+            Employee Polls Project
+          </p>
+        </div>
       </div>
     </div>
   );
-};
-
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '80vh',
-    padding: '20px',
-  },
-  box: {
-    width: '100%',
-    maxWidth: '400px',
-    padding: '40px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    textAlign: 'center',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-    backgroundColor: '#fff',
-  },
-  title: {
-    margin: '0 0 10px 0',
-    color: '#333',
-  },
-  subtitle: {
-    fontSize: '1rem',
-    color: '#666',
-    marginBottom: '30px',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    textAlign: 'left',
-  },
-  label: {
-    marginBottom: '8px',
-    fontWeight: 'bold',
-  },
-  select: {
-    padding: '10px',
-    fontSize: '1rem',
-    borderRadius: '4px',
-    border: '1px solid #ccc',
-    marginBottom: '20px',
-  },
-  button: {
-    padding: '12px',
-    fontSize: '1rem',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s',
-  },
-  disabled: {
-    backgroundColor: '#ccc',
-    cursor: 'not-allowed',
-  }
 };
 
 export default Login;
