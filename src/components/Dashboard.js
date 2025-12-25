@@ -1,124 +1,198 @@
 /**
- * File: src/components/Dashboard.js
- * Description: 
- * The main landing page for authenticated users. 
- * Features include:
- * 1. Categorization of polls into "Unanswered" (New Questions) and "Answered" (Done).
- * 2. Sorting by timestamp (newest first).
- * 3. A toggle system to switch between views.
- * 4. Responsive grid layout using Tailwind CSS.
- * * Fixes applied:
- * - Renamed file to .js to adhere to the "no .jsx" requirement.
- * - Verified Redux imports and state mapping.
+ * File: src/App.js
+ * Description: Main entry point for the "Would You Rather" Application.
+ * This version is configured for VS Code using Redux state management.
  */
 
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { handleInitialData } from './actions/shared';
+import { setAuthedUser } from './actions/authedUser';
+import { 
+  LogIn, 
+  HelpCircle, 
+  Trophy, 
+  LogOut, 
+  ChevronRight, 
+  PlusCircle, 
+  LayoutDashboard 
+} from 'lucide-react';
 
-const Dashboard = () => {
-  // Local state for the toggle view
-  const [view, setView] = useState('unanswered'); 
-  
-  // Mapping global state from the Redux store
+/**
+ * QuestionCard Component
+ * Displays summary of the poll on the Dashboard
+ */
+const QuestionCard = ({ question, author }) => (
+  <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group">
+    <div className="p-1 bg-indigo-50 border-b border-gray-100 flex items-center justify-center">
+      <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest py-1">Would You Rather</span>
+    </div>
+    <div className="p-6">
+      <div className="flex items-center space-x-3 mb-4">
+        <img src={author.avatarURL} alt={author.name} className="w-10 h-10 rounded-full bg-gray-100" />
+        <div className="overflow-hidden">
+          <p className="text-sm font-bold text-gray-900 truncate">{author.name} asks:</p>
+          <p className="text-xs text-gray-400 truncate">...{question.optionOne.text}...</p>
+        </div>
+      </div>
+      <button className="w-full py-2.5 px-4 bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-600 hover:text-white rounded-xl font-bold text-sm transition-all flex items-center justify-center group-hover:scale-[1.02]">
+        View Poll <ChevronRight className="ml-1 w-4 h-4" />
+      </button>
+    </div>
+  </div>
+);
+
+const App = () => {
+  const dispatch = useDispatch();
   const authedUser = useSelector((state) => state.authedUser);
   const users = useSelector((state) => state.users);
   const questions = useSelector((state) => state.questions);
 
-  // 1. Sort all question IDs by timestamp (newest first)
-  const sortedQuestionIds = Object.keys(questions || {}).sort(
-    (a, b) => questions[b].timestamp - questions[a].timestamp
-  );
+  // Local state for UI navigation/tabs
+  const [activeTab, setActiveTab] = React.useState('unanswered');
+  const [view, setView] = React.useState('dashboard');
 
-  // 2. Filter questions based on the authedUser's voting history
-  const unansweredIds = sortedQuestionIds.filter(
-    (id) => !questions[id].optionOne.votes.includes(authedUser) &&
-            !questions[id].optionTwo.votes.includes(authedUser)
-  );
+  useEffect(() => {
+    dispatch(handleInitialData());
+  }, [dispatch]);
 
-  const answeredIds = sortedQuestionIds.filter(
-    (id) => questions[id].optionOne.votes.includes(authedUser) ||
-            questions[id].optionTwo.votes.includes(authedUser)
-  );
+  const handleLogin = (userId) => {
+    dispatch(setAuthedUser(userId));
+  };
 
-  const activeList = view === 'unanswered' ? unansweredIds : answeredIds;
+  const handleLogout = () => {
+    dispatch(setAuthedUser(null));
+    setView('dashboard');
+  };
 
-  return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-10 gap-6">
-        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Dashboard</h1>
-        
-        {/* Toggle Switch Container */}
-        <div className="flex p-1 bg-gray-100 rounded-xl">
-          <button
-            onClick={() => setView('unanswered')}
-            className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-              view === 'unanswered'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            New Questions
-          </button>
-          <button
-            onClick={() => setView('answered')}
-            className={`px-6 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
-              view === 'answered'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Done
-          </button>
+  if (!authedUser) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-indigo-600 p-10 text-center text-white">
+            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <HelpCircle className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-2xl font-black">Would You Rather?</h1>
+            <p className="text-indigo-100 text-sm mt-2 opacity-90">Please sign in to continue</p>
+          </div>
+          <div className="p-8">
+            <div className="space-y-3">
+              {users && Object.values(users).map((user) => (
+                <button
+                  key={user.id}
+                  onClick={() => handleLogin(user.id)}
+                  className="w-full flex items-center p-4 rounded-2xl border-2 border-gray-100 hover:border-indigo-600 hover:bg-indigo-50 transition-all group text-left"
+                >
+                  <img src={user.avatarURL} alt={user.name} className="w-12 h-12 rounded-full bg-gray-100 mr-4 shadow-sm" />
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900 group-hover:text-indigo-700">{user.name}</p>
+                    <p className="text-xs text-gray-400">@{user.id}</p>
+                  </div>
+                  <LogIn className="w-5 h-5 text-gray-300 group-hover:text-indigo-600" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Grid Display */}
-      {activeList.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 bg-white border-2 border-dashed border-gray-200 rounded-3xl">
-          <p className="text-gray-400 text-lg font-medium">Nothing to see here yet!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {activeList.map((id) => {
-            const question = questions[id];
-            const author = users[question.author];
-            return (
-              <div 
-                key={id} 
-                className="group relative bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
-              >
-                <div className="flex flex-col items-center">
-                  <div className="relative mb-4">
-                    <img 
-                      src={author?.avatarURL} 
-                      alt={author?.name} 
-                      className="w-20 h-20 rounded-full object-cover ring-4 ring-blue-50 group-hover:ring-blue-100 transition-all"
-                    />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-1">{author?.name}</h3>
-                  <p className="text-sm text-gray-400 mb-6 font-medium">
-                    {new Date(question.timestamp).toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
-                  </p>
-                  
-                  <Link 
-                    to={`/questions/${id}`}
-                    className="inline-flex items-center justify-center w-full py-3 px-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-md hover:shadow-blue-200"
-                  >
-                    Show Poll
-                  </Link>
-                </div>
+  const sortedQuestionIds = questions ? Object.keys(questions).sort(
+    (a, b) => questions[b].timestamp - questions[a].timestamp
+  ) : [];
+
+  const unanswered = sortedQuestionIds.filter(id => 
+    !questions[id].optionOne.votes.includes(authedUser) &&
+    !questions[id].optionTwo.votes.includes(authedUser)
+  );
+
+  const answered = sortedQuestionIds.filter(id => 
+    questions[id].optionOne.votes.includes(authedUser) ||
+    questions[id].optionTwo.votes.includes(authedUser)
+  );
+
+  const currentList = activeTab === 'unanswered' ? unanswered : answered;
+  const user = users ? users[authedUser] : null;
+
+  return (
+    <div className="min-h-screen bg-slate-50">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-2 mr-4">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-white" />
               </div>
-            );
-          })}
+              <span className="font-black text-gray-900 tracking-tight">WYR?</span>
+            </div>
+            <div className="hidden md:flex items-center space-x-1">
+              <button 
+                onClick={() => setView('dashboard')} 
+                className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center ${view === 'dashboard' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500'}`}
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />Home
+              </button>
+              <button 
+                onClick={() => setView('add')} 
+                className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center ${view === 'add' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500'}`}
+              >
+                <PlusCircle className="w-4 h-4 mr-2" />New Poll
+              </button>
+              <button 
+                onClick={() => setView('leaderboard')} 
+                className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center ${view === 'leaderboard' ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500'}`}
+              >
+                <Trophy className="w-4 h-4 mr-2" />Leaderboard
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 pr-4 border-r border-gray-100">
+              <span className="text-sm font-bold text-gray-900">{user?.name}</span>
+              <img src={user?.avatarURL} alt={user?.name} className="w-9 h-9 rounded-full bg-gray-100" />
+            </div>
+            <button onClick={handleLogout} className="p-2 text-gray-400 hover:text-red-500">
+              <LogOut className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-      )}
+      </nav>
+
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {view === 'dashboard' && (
+          <>
+            <div className="flex mb-8">
+              <div className="inline-flex bg-gray-200/50 p-1 rounded-2xl">
+                <button 
+                  onClick={() => setActiveTab('unanswered')} 
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'unanswered' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}
+                >
+                  Unanswered
+                </button>
+                <button 
+                  onClick={() => setActiveTab('answered')} 
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'answered' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500'}`}
+                >
+                  Answered
+                </button>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {currentList.map(id => (
+                <QuestionCard 
+                  key={id} 
+                  question={questions[id]} 
+                  author={users[questions[id].author]} 
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </main>
     </div>
   );
 };
 
-export default Dashboard;
+export default App;
