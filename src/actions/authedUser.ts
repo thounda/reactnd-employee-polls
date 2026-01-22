@@ -1,19 +1,22 @@
 /**
- * File: src/actions/authedUser.js
+ * File: src/actions/authedUser.ts
  * Description: Action creators for setting and clearing the authenticated user (login/logout), 
  * and the thunk for handling the asynchronous setting of the user.
+ * CATEGORY: Redux Actions / Auth Flow
  */
-import { showLoading, hideLoading } from 'react-redux-loading-bar';
 
-export const SET_AUTHED_USER = 'SET_AUTHED_USER';
-export const LOGOUT_AUTHED_USER = 'LOGOUT_AUTHED_USER';
+import { showLoading, hideLoading } from 'react-redux-loading-bar';
+import { AppDispatch } from '../store';
+
+// Action Constants
+export const SET_AUTHED_USER = 'SET_AUTHED_USER' as const;
+export const LOGOUT_AUTHED_USER = 'LOGOUT_AUTHED_USER' as const;
 
 /**
  * Action creator to set the currently authenticated user ID.
  * @param {string} id - The user ID.
- * @returns {Object} Redux action.
  */
-export function setAuthedUser(id) {
+export function setAuthedUser(id: string | null) {
   return {
     type: SET_AUTHED_USER,
     id,
@@ -22,7 +25,6 @@ export function setAuthedUser(id) {
 
 /**
  * Action creator to clear the currently authenticated user (logout).
- * @returns {Object} Redux action.
  */
 export function logoutAuthedUser() {
   return {
@@ -34,16 +36,20 @@ export function logoutAuthedUser() {
  * Redux Thunk to handle setting the authenticated user.
  * This function handles the async flow and loading state.
  * @param {string} id - The user ID to set as authenticated.
- * @returns {Function} A Redux Thunk function.
  */
-export function handleSetAuthedUser(id) {
-  return (dispatch) => {
+export function handleSetAuthedUser(id: string) {
+  return (dispatch: AppDispatch) => {
     dispatch(showLoading());
 
-    // In a real application, you might make an API call here.
-    // Since we are mocking the login/logout, we just dispatch the action directly.
+    // Requirement: Set the authorized user.
+    // In this app, we mock the login by just dispatching the ID.
     dispatch(setAuthedUser(id));
 
     dispatch(hideLoading());
   };
 }
+
+// Type definitions for the actions to be used in Reducers
+export type AuthedUserActions = 
+  | ReturnType<typeof setAuthedUser> 
+  | ReturnType<typeof logoutAuthedUser>;

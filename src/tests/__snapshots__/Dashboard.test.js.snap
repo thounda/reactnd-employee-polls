@@ -1,0 +1,71 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Dashboard Component Tests > should match the existing UI snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="max-w-5xl mx-auto px-4 py-8"
+  >
+    <header
+      class="mb-10 text-center"
+    >
+      <h1
+        class="text-4xl font-black text-gray-900 tracking-tight"
+      >
+        Poll Dashboard
+      </h1>
+      <p
+        class="text-gray-500 mt-2"
+      >
+        Check out the latest questions or review your answers.
+      </p>
+    </header>
+    <div
+      class="flex w-full max-w-md mx-auto mb-10 bg-gray-100 p-1 rounded-xl shadow-sm"
+    >
+      <button
+        class="flex-1 py-3 px-4 text-sm font-bold rounded-lg transition-all duration-200 bg-white text-indigo-600 shadow-sm"
+      >
+        New Questions (1)
+      </button>
+      <button
+        class="flex-1 py-3 px-4 text-sm font-bold rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700"
+      >
+        Completed (0)
+      </button>
+    </div>
+    <div
+      class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      <div
+        class="border rounded-lg p-6 mb-4 shadow-sm hover:shadow-md transition-shadow bg-white flex flex-col items-center"
+      >
+        <div
+          class="w-20 h-20 mb-4 overflow-hidden rounded-full border-2 border-indigo-50"
+        >
+          <img
+            alt="Avatar of Sarah Edo"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <h3
+          class="font-bold text-lg mb-1 text-gray-800"
+        >
+          Sarah Edo
+        </h3>
+        <p
+          class="text-gray-400 text-xs mb-6 font-medium uppercase tracking-tight"
+        >
+          6/28/2016 at 10:21 PM
+        </p>
+        <a
+          class="w-full text-center py-2.5 px-4 bg-indigo-600 text-white rounded-md font-bold hover:bg-indigo-700 transition-colors shadow-sm active:transform active:scale-95"
+          data-discover="true"
+          href="/questions/8xf0y6ziyj7ifthhx832"
+        >
+          Show Poll
+        </a>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;

@@ -1,10 +1,8 @@
 /**
- * FILE: src/components/Dashboard.test.js
+ * FILE: src/tests/Dashboard.test.js
  * DESCRIPTION: 
- * This file contains unit and snapshot tests for the Dashboard component.
- * It uses the 'vitest-environment-jsdom' directive to simulate a browser 
- * environment. The mock state is configured to ensure at least one 
- * question is displayed in the "New Questions" category.
+ * Unit and snapshot tests for the Dashboard component.
+ * Verifies that the dashboard correctly renders poll data from the Redux store.
  */
 
 // @vitest-environment jsdom
@@ -16,12 +14,13 @@ import { Provider } from 'react-redux';
 import { legacy_createStore as createStore, applyMiddleware } from 'redux';
 import { thunk } from 'redux-thunk';
 import { BrowserRouter } from 'react-router-dom';
-import Dashboard from './Dashboard.js';
+// Path adjusted to look in the components folder from the tests folder
+import Dashboard from '../components/Dashboard.js';
 
 /**
  * TEST DATA (MOCK STATE)
- * The mock state provides the necessary context for the Dashboard to render.
- * Using 'Sarah Edo' as the display name to match UI expectations.
+ * Configured so that the user 'sarahedo' has not answered the poll,
+ * ensuring it appears in the "New Questions" section.
  */
 const initialState = {
   authedUser: 'sarahedo',
@@ -38,7 +37,7 @@ const initialState = {
     sarahedo: {
       id: 'sarahedo',
       name: 'Sarah Edo',
-      answers: {}, // Question remains unanswered to appear in "New Questions"
+      answers: {}, 
       questions: ['8xf0y6ziyj7ifthhx832']
     }
   }
@@ -48,7 +47,7 @@ const mockReducer = (state = initialState) => state;
 
 /**
  * RENDER UTILITY
- * Wraps the Dashboard in a Redux Provider and Router for a complete test context.
+ * Wraps the Dashboard in Redux and Router context.
  */
 const renderWithProviders = (ui) => {
   const store = createStore(mockReducer, applyMiddleware(thunk));
@@ -70,8 +69,8 @@ describe('Dashboard Component Tests', () => {
     expect(heading).toBeDefined();
 
     /**
-     * The UI correctly renders the user's name "Sarah Edo".
-     * findByText is used to handle any asynchronous rendering.
+     * Verify that the UI renders the user's name "Sarah Edo"
+     * associated with the poll author.
      */
     const authorName = await screen.findByText(/Sarah Edo/i);
     expect(authorName).toBeDefined();

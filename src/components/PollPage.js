@@ -1,137 +1,108 @@
 /**
  * File: src/components/PollPage.js
- * Description: The main container for displaying a single poll.
- * It determines if the user has answered the poll and displays the appropriate
- * component (voting form or results).
+ * Description: Displays poll details, voting interface, or results.
  */
-import React from 'react';
-import { useParams } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import Avatar from './Avatar.js';
-import UnansweredPoll from './UnansweredPoll.js';
-import Error404 from './Error404.js'; 
+import { useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import Avatar from "./Avatar.js";
+import UnansweredPoll from "./UnansweredPoll.js";    
+import NotFound from "./NotFound.js";
 
-// Component to display poll results once answered
+/**
+ * AnsweredPollResults Component
+ * Renders the results of a poll that the user has already voted on.
+ */
 function AnsweredPollResults({ question, author, authedUserAnswer }) {
-  // --- Results Logic ---
   const totalVotes = question.optionOne.votes.length + question.optionTwo.votes.length;
-
-  const getVotePercentage = (option) => {
-    const votes = question[option].votes.length;
-    // Prevent division by zero and ensure a clean percentage
+  
+  const calculatePercent = (votes) => {
     return totalVotes === 0 ? 0 : Math.round((votes / totalVotes) * 100);
   };
-  
-  const optionOneVotes = question.optionOne.votes.length;
-  const optionTwoVotes = question.optionTwo.votes.length;
 
   return (
-    <div className="bg-white rounded-xl shadow-2xl overflow-hidden max-w-lg mx-auto">
-      {/* Author Header */}
-      <div className="bg-gray-100 p-4 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 text-center">
-          {author.name} asked:
-        </h2>
+    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 max-w-2xl mx-auto">
+      <div className="flex items-center mb-6 pb-4 border-b">
+        <Avatar url={author.avatarURL} name={author.name} size="lg" />
+        <div className="ml-4 text-left">
+          <h2 className="text-xl font-bold text-gray-800">Asked by {author.name}</h2>
+          <p className="text-gray-500">Poll Results</p>
+        </div>
       </div>
 
-      <div className="p-6 space-y-4">
-        <h1 className="text-3xl font-extrabold text-indigo-700 mb-6 text-center">
-          Results
-        </h1>
+      <div className="space-y-4">
+        {['optionOne', 'optionTwo'].map((optionKey) => {
+          const option = question[optionKey];
+          const isSelected = authedUserAnswer === optionKey;
+          const votes = option.votes.length;
+          const percent = calculatePercent(votes);
 
-        {/* Option One Results Card */}
-        <div className={`p-4 rounded-lg border-2 relative ${authedUserAnswer === 'optionOne' ? 'border-green-500 bg-green-50 shadow-lg' : 'border-gray-200 bg-gray-50'}`}>
-          {authedUserAnswer === 'optionOne' && (
-            <span className="absolute top-0 right-0 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg rounded-tr-xl shadow-md">
-              Your Vote
-            </span>
-          )}
-          <p className="text-lg font-medium mb-2 text-gray-700">
-            Would you rather {question.optionOne.text}?
-          </p>
-          <div className="h-6 bg-gray-200 rounded-full mb-1 overflow-hidden">
+          return (
             <div 
-              className="h-6 bg-indigo-600 transition-all duration-500" 
-              style={{ width: `${getVotePercentage('optionOne')}%` }}
-              title={`${optionOneVotes} votes (${getVotePercentage('optionOne')}%)`}
-            ></div>
-          </div>
-          <div className="flex justify-between text-sm font-semibold text-gray-600 mt-1">
-            <span>{optionOneVotes} out of {totalVotes} votes</span>
-            <span className="text-indigo-800">{getVotePercentage('optionOne')}%</span>
-          </div>
-        </div>
-
-        {/* Option Two Results Card */}
-        <div className={`p-4 rounded-lg border-2 relative ${authedUserAnswer === 'optionTwo' ? 'border-green-500 bg-green-50 shadow-lg' : 'border-gray-200 bg-gray-50'}`}>
-          {authedUserAnswer === 'optionTwo' && (
-            <span className="absolute top-0 right-0 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg rounded-tr-xl shadow-md">
-              Your Vote
-            </span>
-          )}
-          <p className="text-lg font-medium mb-2 text-gray-700">
-            Would you rather {question.optionTwo.text}?
-          </p>
-          <div className="h-6 bg-gray-200 rounded-full mb-1 overflow-hidden">
-            <div 
-              className="h-6 bg-indigo-600 transition-all duration-500" 
-              style={{ width: `${getVotePercentage('optionTwo')}%` }}
-              title={`${optionTwoVotes} votes (${getVotePercentage('optionTwo')}%)`}
-            ></div>
-          </div>
-          <div className="flex justify-between text-sm font-semibold text-gray-600 mt-1">
-            <span>{optionTwoVotes} out of {totalVotes} votes</span>
-            <span className="text-indigo-800">{getVotePercentage('optionTwo')}%</span>
-          </div>
-        </div>
-        
-        <div className="text-center pt-4">
-          <Avatar url={author.avatarURL} name={author.name} size="w-16 h-16 border-4 border-indigo-400 mx-auto" />
-          <p className="text-sm text-gray-500 mt-2">Poll Author: {author.name}</p>
-        </div>
+              key={optionKey} 
+              className={`p-4 rounded-lg border-2 transition-all ${
+                isSelected 
+                  ? 'border-indigo-500 bg-indigo-50 shadow-sm' 
+                  : 'border-gray-200 bg-gray-50'
+              }`}
+            >
+              {isSelected && (
+                <span className="inline-block px-2 py-1 mb-2 text-xs font-bold text-white bg-indigo-500 rounded-full">
+                  Your Vote
+                </span>
+              )}
+              <p className="text-lg font-medium text-gray-800 mb-2">{option.text}</p>
+              <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                <div 
+                  className="bg-indigo-600 h-4 rounded-full transition-all duration-500" 
+                  style={{ width: `${percent}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between mt-2 text-sm text-gray-600 font-semibold">
+                <span>{votes} {votes === 1 ? 'vote' : 'votes'}</span>
+                <span>{percent}%</span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-
+/**
+ * PollPage Component
+ * Main container for a specific poll route.
+ */
 function PollPage() {
-  // Get question ID from URL
-  const { id: qid } = useParams();
-
-  // Get necessary data from Redux store
+  const { question_id } = useParams();
   const authedUser = useSelector((state) => state.authedUser);
   const questions = useSelector((state) => state.questions);
   const users = useSelector((state) => state.users);
 
-  const question = questions[qid];
-  
-  // 1. Check for Invalid Question ID (404)
+  const question = questions[question_id];
+
+  // If the question ID is invalid, redirect to the custom NotFound component
   if (!question) {
-    return <Error404 />;
+    return <NotFound />;
   }
 
   const author = users[question.author];
-  const userAnswers = users[authedUser]?.answers || {};
-  
-  // 2. Check if the user has answered this question
-  const authedUserAnswer = userAnswers[qid]; // Will be 'optionOne', 'optionTwo', or undefined
+  const authedUserAnswer = (question.optionOne.votes.includes(authedUser)) 
+    ? 'optionOne' 
+    : (question.optionTwo.votes.includes(authedUser)) 
+      ? 'optionTwo' 
+      : null;
 
   return (
-    <div className="min-h-full py-8">
+    <div className="container mx-auto px-4 py-8">
       {authedUserAnswer ? (
-        // RENDER RESULTS
         <AnsweredPollResults 
           question={question} 
           author={author} 
-          authedUserAnswer={authedUserAnswer}
+          authedUserAnswer={authedUserAnswer} 
         />
       ) : (
-        // RENDER VOTING FORM
-        <UnansweredPoll 
-          question={question} 
-          author={author} 
-        />
+        <UnansweredPoll question={question} author={author} />
       )}
     </div>
   );
