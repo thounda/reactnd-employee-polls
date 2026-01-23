@@ -1,12 +1,14 @@
 /**
- * File: src/_DATA.test.js
+ * File: src/tests/_DATA.test.js
  * Description: 
  * Unit tests for the mock database functions provided in _DATA.js.
- * Includes tests for _saveQuestion and _saveQuestionAnswer.
+ * This ensures that the asynchronous data persistence logic works as expected
+ * for both success and failure scenarios.
  */
 
 import { describe, it, expect } from 'vitest';
-import { _saveQuestion, _saveQuestionAnswer } from './utils/_DATA';
+// Adjusted path to point to the utils directory from the tests directory
+import { _saveQuestion, _saveQuestionAnswer } from '../utils/_DATA';
 
 describe('_saveQuestion', () => {
   it('should return the saved question and update the database when valid data is passed', async () => {
@@ -18,7 +20,7 @@ describe('_saveQuestion', () => {
     
     const result = await _saveQuestion(validQuestion);
     
-    // Check returned object structure
+    // Verify the structure and content of the returned object
     expect(result).toHaveProperty('id');
     expect(result).toHaveProperty('timestamp');
     expect(result.author).toBe('sarahedo');
@@ -33,6 +35,7 @@ describe('_saveQuestion', () => {
       // author and optionTwoText are missing
     };
     
+    // Verify the promise rejects with the specific error message defined in _DATA.js
     await expect(_saveQuestion(invalidQuestion)).rejects.toEqual(
       'Please provide optionOneText, optionTwoText, and author'
     );
@@ -41,7 +44,10 @@ describe('_saveQuestion', () => {
 
 describe('_saveQuestionAnswer', () => {
   it('should return true and update state when valid answer data is passed', async () => {
-    // 1. Create a question first to ensure a valid qid exists in the local state
+    /**
+     * To ensure a valid test, we first create a question 
+     * so we have a legitimate qid to answer.
+     */
     const newQuestion = await _saveQuestion({
       optionOneText: 'Blue',
       optionTwoText: 'Red',
@@ -54,7 +60,6 @@ describe('_saveQuestionAnswer', () => {
       answer: 'optionOne',
     };
     
-    // 2. Test the answer saving
     const result = await _saveQuestionAnswer(validPayload);
     expect(result).toBe(true);
   });
@@ -63,7 +68,7 @@ describe('_saveQuestionAnswer', () => {
     const invalidPayload = {
       authedUser: 'sarahedo',
       qid: 'any-id',
-      // answer field is missing
+      // 'answer' field is intentionally missing
     };
     
     await expect(_saveQuestionAnswer(invalidPayload)).rejects.toEqual(
