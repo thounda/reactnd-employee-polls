@@ -4,44 +4,54 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 /**
  * FILE: src/App.tsx
  * DESCRIPTION:
- * The main entry point for the Employee Polls application.
- * This version uses a robust bridge to access Redux and modular components
- * while adhering to the environment's specific constraints and your 
- * modular design requirements.
+ * Standard production entry point for the Employee Polls application.
+ * This version maintains clean imports for VS Code while using safe-guards
+ * to ensure the preview environment remains stable.
  */
 
-// --- Redux & Component Bridge ---
-// These helpers allow us to maintain a modular import style while ensuring 
-// the code compiles even if the environment's bundler struggles with local paths.
-const useSelector = (window as any).ReactRedux?.useSelector || (() => ({}));
-const useDispatch = (window as any).ReactRedux?.useDispatch || (() => () => {});
+// --- Standard Imports for VS Code ---
+// These resolve correctly in your local environment via node_modules.
+import { useSelector as reduxUseSelector, useDispatch as reduxUseDispatch } from 'react-redux';
+import { LoadingBar as ReduxLoadingBar } from 'react-redux-loading-bar';
 
-// Importing modular components
-// In your local VS Code environment, these paths will resolve correctly.
-// For this preview, we use a fallback mechanism.
-const Nav = (window as any).AppComponents?.Nav || (() => null);
-const Login = (window as any).AppComponents?.Login || (() => <div>Login Loading...</div>);
-const Dashboard = (window as any).AppComponents?.Dashboard || (() => <div>Dashboard Loading...</div>);
-const NewQuestion = (window as any).AppComponents?.NewQuestion || (() => <div>New Question Loading...</div>);
-const Leaderboard = (window as any).AppComponents?.Leaderboard || (() => <div>Leaderboard Loading...</div>);
-const QuestionDetail = (window as any).AppComponents?.QuestionDetail || (() => <div>Question Detail Loading...</div>);
+// --- Component Imports ---
+import Nav from './components/Nav';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import NewQuestion from './components/NewQuestion';
+import Leaderboard from './components/Leaderboard';
+import QuestionDetail from './components/QuestionDetail';
+import { handleInitialData } from './actions/shared';
+
+// --- Environment Bridge ---
+// Safely falls back to global variables only if standard imports are unavailable.
+const useSelector = (reduxUseSelector as any) || (window as any).ReactRedux?.useSelector || (() => ({}));
+const useDispatch = (reduxUseDispatch as any) || (window as any).ReactRedux?.useDispatch || (() => () => {});
+const LoadingBar = (ReduxLoadingBar as any) || (() => null);
+
+interface RootState {
+  authedUser: string | null;
+  loadingBar: any;
+}
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   
-  // State selection using the bridge
-  const authedUser = useSelector((state: any) => state.app?.authedUser);
-  const loading = useSelector((state: any) => state.app?.loading);
+  const authedUser = useSelector((state: RootState) => state.authedUser);
+  const loading = useSelector((state: RootState) => state.loadingBar?.default === 1);
 
   useEffect(() => {
-    const fetchInitialData = (window as any).AppActions?.fetchInitialData;
-    if (fetchInitialData) {
-      dispatch(fetchInitialData());
+    // Standard Redux Thunk dispatch for VS Code
+    const action = typeof handleInitialData === 'function' 
+      ? (handleInitialData() as any) 
+      : { type: 'INITIAL_DATA_FALLBACK' };
+      
+    if (typeof dispatch === 'function') {
+      dispatch(action);
     }
   }, [dispatch]);
 
-  // Protected Route logic
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (!authedUser) {
       return <Navigate to="/login" state={{ from: location }} replace />;
@@ -49,72 +59,70 @@ const App: React.FC = () => {
     return <>{children}</>;
   };
 
-  if (loading) {
-    return (
-      <div className="h-screen flex flex-col items-center justify-center bg-white">
-        <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
-        <p className="mt-4 text-slate-400 font-bold uppercase tracking-widest text-xs">Loading Application</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50/30 font-sans text-slate-900">
-      {/* Navigation - Passing required props to satisfy NavProps interface */}
-      {authedUser && (
-        <Nav 
-          activePath={location.pathname} 
-          onNavigate={() => {}} 
-        />
-      )}
-
-      <main className="container mx-auto max-w-6xl px-4 py-8">
-        <Routes>
-          <Route 
-            path="/login" 
-            element={authedUser ? <Navigate to="/" /> : <Login />} 
+    <div className="app-container">
+      <LoadingBar style={{ backgroundColor: '#4f46e5', height: '3px', position: 'fixed', top: 0, zIndex: 9999 }} />
+      
+      <div className="min-h-screen bg-gray-50 text-gray-900">
+        {authedUser && (
+          <Nav 
+            activePath={location.pathname} 
+            onNavigate={(path: string) => console.log(`Navigating to ${path}`)} 
           />
+        )}
 
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route 
-            path="/leaderboard" 
-            element={
-              <ProtectedRoute>
-                <Leaderboard />
-              </ProtectedRoute>
-            } 
-          />
+        <main className="container mx-auto px-4 py-8 max-w-5xl">
+          <Routes>
+            <Route 
+              path="/login" 
+              element={authedUser ? <Navigate to="/" /> : <Login />} 
+            />
 
-          <Route 
-            path="/add" 
-            element={
-              <ProtectedRoute>
-                <NewQuestion />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/" 
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/leaderboard" 
+              element={
+                <ProtectedRoute>
+                  <Leaderboard />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route 
-            path="/questions/:question_id" 
-            element={
-              <ProtectedRoute>
-                <QuestionDetail />
-              </ProtectedRoute>
-            } 
-          />
+            <Route 
+              path="/add" 
+              element={
+                <ProtectedRoute>
+                  <NewQuestion />
+                </ProtectedRoute>
+              } 
+            />
 
-          <Route path="/404" element={<div className="text-center py-20 text-2xl font-bold">404 - Page Not Found</div>} />
-          <Route path="*" element={<Navigate to="/404" />} />
-        </Routes>
-      </main>
+            <Route 
+              path="/questions/:question_id" 
+              element={
+                <ProtectedRoute>
+                  <QuestionDetail />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route path="/404" element={
+              <div className="text-center py-20">
+                <h1 className="text-4xl font-bold text-gray-300 uppercase">404 - Page Not Found</h1>
+              </div>
+            } />
+            <Route path="*" element={<Navigate to="/404" />} />
+          </Routes>
+        </main>
+      </div>
     </div>
   );
 };
