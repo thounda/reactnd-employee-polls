@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 /**
  * FILE: src/App.tsx
  * DESCRIPTION:
- * Standard production entry point for the Employee Polls application.
- * This version maintains clean imports for VS Code while using safe-guards
- * to ensure the preview environment remains stable.
+ * Main entry point for the Employee Polls application.
+ * This version uses robust bridging to ensure the preview environment
+ * remains stable despite local file dependencies.
  */
 
 // --- Standard Imports for VS Code ---
-// These resolve correctly in your local environment via node_modules.
+// These resolve correctly in your local environment.
 import { useSelector as reduxUseSelector, useDispatch as reduxUseDispatch } from 'react-redux';
-import { LoadingBar as ReduxLoadingBar } from 'react-redux-loading-bar';
+import ReduxLoadingBar from 'react-redux-loading-bar';
 
 // --- Component Imports ---
 import Nav from './components/Nav';
@@ -24,10 +24,10 @@ import QuestionDetail from './components/QuestionDetail';
 import { handleInitialData } from './actions/shared';
 
 // --- Environment Bridge ---
-// Safely falls back to global variables only if standard imports are unavailable.
+// Safely falls back to globals if standard imports are unavailable in the preview.
 const useSelector = (reduxUseSelector as any) || (window as any).ReactRedux?.useSelector || (() => ({}));
 const useDispatch = (reduxUseDispatch as any) || (window as any).ReactRedux?.useDispatch || (() => () => {});
-const LoadingBar = (ReduxLoadingBar as any) || (() => null);
+const LoadingBar = (ReduxLoadingBar as any) || (window as any).ReactReduxLoadingBar?.default || (() => null);
 
 interface RootState {
   authedUser: string | null;
@@ -37,20 +37,20 @@ interface RootState {
 const App: React.FC = () => {
   const dispatch = useDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const authedUser = useSelector((state: RootState) => state.authedUser);
-  const loading = useSelector((state: RootState) => state.loadingBar?.default === 1);
 
   useEffect(() => {
-    // Standard Redux Thunk dispatch for VS Code
-    const action = typeof handleInitialData === 'function' 
-      ? (handleInitialData() as any) 
-      : { type: 'INITIAL_DATA_FALLBACK' };
-      
-    if (typeof dispatch === 'function') {
-      dispatch(action);
+    // Standard Thunk dispatch
+    if (typeof handleInitialData === 'function' && typeof dispatch === 'function') {
+      dispatch(handleInitialData());
     }
   }, [dispatch]);
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (!authedUser) {
@@ -61,13 +61,21 @@ const App: React.FC = () => {
 
   return (
     <div className="app-container">
-      <LoadingBar style={{ backgroundColor: '#4f46e5', height: '3px', position: 'fixed', top: 0, zIndex: 9999 }} />
+      <LoadingBar 
+        style={{ 
+          backgroundColor: '#4f46e5', 
+          height: '3px', 
+          position: 'fixed', 
+          top: 0, 
+          zIndex: 9999 
+        }} 
+      />
       
       <div className="min-h-screen bg-gray-50 text-gray-900">
         {authedUser && (
           <Nav 
-            activePath={location.pathname} 
-            onNavigate={(path: string) => console.log(`Navigating to ${path}`)} 
+            activePath={location.pathname}
+            onNavigate={handleNavigation}
           />
         )}
 
@@ -115,8 +123,9 @@ const App: React.FC = () => {
             />
 
             <Route path="/404" element={
-              <div className="text-center py-20">
-                <h1 className="text-4xl font-bold text-gray-300 uppercase">404 - Page Not Found</h1>
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <h1 className="text-6xl font-extrabold text-indigo-600">404</h1>
+                <p className="text-xl text-gray-500 mt-4">Oops! The poll you are looking for doesn't exist.</p>
               </div>
             } />
             <Route path="*" element={<Navigate to="/404" />} />

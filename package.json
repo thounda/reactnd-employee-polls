@@ -19,7 +19,7 @@
     "react-dom": "^18.2.0",
     "react-redux": "^9.2.0",
     "react-redux-loading-bar": "^5.0.8",
-    "react-router-dom": "^7.10.1",
+    "react-router-dom": "^7.13.0",
     "redux": "^5.0.1",
     "redux-thunk": "^3.1.0"
   },
