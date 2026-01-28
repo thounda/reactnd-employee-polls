@@ -3,20 +3,28 @@
  * DESCRIPTION:
  * Custom middleware that logs every action dispatched to the store
  * along with the state before and after the action is processed.
- * CATEGORY: Architecture (Middleware)
  */
 
 import { Middleware } from '@reduxjs/toolkit';
-import { RootState } from '../store';
 
 /**
  * LOGGER MIDDLEWARE
  * This follows the standard Redux middleware signature: (store) => (next) => (action).
- * It provides visibility into the state lifecycle during development.
+ * It provides colored console logs grouped by action type for easier debugging.
  */
-const logger: Middleware<{}, RootState> = (store) => (next) => (action) => {
-  // Group logs by action type for better readability in the console
-  console.group(action.type);
+const logger: Middleware = (store) => (next) => (action) => {
+  // Check if this is a standard action object with a type
+  if (typeof action !== 'object' || action === null || !('type' in action)) {
+    return next(action);
+  }
+
+  // Group logs by action type. 
+  // We check for groupCollapsed to keep the console tidy; fallback to group if needed.
+  if (typeof console.groupCollapsed === 'function') {
+    console.groupCollapsed(action.type as string);
+  } else {
+    console.group(action.type as string);
+  }
   
   // Log the current state before the action is applied
   console.log('%c prev state', 'color: #9E9E9E; font-weight: bold;', store.getState());

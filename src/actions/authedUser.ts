@@ -9,16 +9,16 @@ import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import { AppDispatch } from '../store';
 
 // Action Constants
-export const SET_AUTHED_USER = 'SET_AUTHED_USER' as const;
-export const LOGOUT_AUTHED_USER = 'LOGOUT_AUTHED_USER' as const;
+export const SET_AUTHED_USER = 'SET_AUTHED_USER';
+export const LOGOUT_AUTHED_USER = 'LOGOUT_AUTHED_USER';
 
 /**
  * Action creator to set the currently authenticated user ID.
- * @param {string} id - The user ID.
+ * @param {string | null} id - The user ID.
  */
 export function setAuthedUser(id: string | null) {
   return {
-    type: SET_AUTHED_USER,
+    type: SET_AUTHED_USER as typeof SET_AUTHED_USER,
     id,
   };
 }
@@ -28,7 +28,7 @@ export function setAuthedUser(id: string | null) {
  */
 export function logoutAuthedUser() {
   return {
-    type: LOGOUT_AUTHED_USER,
+    type: LOGOUT_AUTHED_USER as typeof LOGOUT_AUTHED_USER,
   };
 }
 

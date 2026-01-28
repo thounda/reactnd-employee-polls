@@ -1,111 +1,83 @@
 /**
  * FILE: src/slices/usersSlice.ts
  * DESCRIPTION:
- * Implementation of the Users Slice using Redux Toolkit (RTK).
- * Manages the collection of users fetched from the mock database.
- * CATEGORY: Architecture (RTK Implementation)
+ * Manages the "users" state. Handles receiving user data and 
+ * updating user records when they create or answer questions.
  */
 
-import React from 'react';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-// --- VS CODE PRODUCTION IMPORTS ---
-// In your local environment, use: 
-// import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-// import { UsersState } from '../types';
-
-let createSlice: any;
-try {
-  const rtk = require('@reduxjs/toolkit');
-  createSlice = rtk.createSlice;
-} catch (e) {
-  // Fallback for preview environment
+/**
+ * Interface for an individual User object
+ */
+export interface User {
+  id: string;
+  name: string;
+  avatarURL: string;
+  answers: {
+    [qid: string]: 'optionOne' | 'optionTwo';
+  };
+  questions: string[];
 }
 
-const initialState: any = {};
+/**
+ * Interface for the Users state object
+ */
+export interface UsersState {
+  [key: string]: User;
+}
 
-const usersSlice = (createSlice) ? createSlice({
+/**
+ * Interface for the payload when a user answers a question
+ */
+interface UserAnswerPayload {
+  authedUser: string;
+  qid: string;
+  answer: 'optionOne' | 'optionTwo';
+}
+
+/**
+ * Interface for the payload when a user creates a question
+ */
+interface UserQuestionPayload {
+  authedUser: string;
+  qid: string;
+}
+
+const initialState: UsersState = {};
+
+const usersSlice = createSlice({
   name: 'users',
   initialState,
   reducers: {
     /**
-     * Action: receiveUsers
-     * Purpose: Initializes or updates the users state with data from the API.
+     * Set the initial batch of users fetched from the mock API.
+     * We use Object.assign to merge or simply return the payload to replace state.
      */
-    receiveUsers: (state: any, action: any) => {
-      return {
-        ...state,
-        ...action.payload,
-      };
+    receiveUsers(_state, action: PayloadAction<UsersState>) {
+      return action.payload;
     },
     /**
-     * Action: addAnswerToUser
-     * Purpose: Updates a specific user's answers object when they vote on a poll.
+     * Update a user's local record to include their new answer.
+     * RTK's Immer allows direct mutation of the state object.
      */
-    addAnswerToUser: (state: any, action: any) => {
+    addAnswerToUser(state, action: PayloadAction<UserAnswerPayload>) {
       const { authedUser, qid, answer } = action.payload;
       if (state[authedUser]) {
-        state[authedUser].answers = {
-          ...state[authedUser].answers,
-          [qid]: answer,
-        };
+        state[authedUser].answers[qid] = answer;
       }
     },
     /**
-     * Action: addQuestionToUser
-     * Purpose: Adds a new question ID to the 'questions' array of the user who created it.
+     * Add a new question ID to the author's list of created questions.
      */
-    addQuestionToUser: (state: any, action: any) => {
+    addQuestionToUser(state, action: PayloadAction<UserQuestionPayload>) {
       const { authedUser, qid } = action.payload;
       if (state[authedUser]) {
-        state[authedUser].questions = state[authedUser].questions.concat([qid]);
+        state[authedUser].questions.push(qid);
       }
     },
   },
-}) : { actions: {}, reducer: (s: any) => s };
+});
 
 export const { receiveUsers, addAnswerToUser, addQuestionToUser } = usersSlice.actions;
 export default usersSlice.reducer;
-
-/**
- * PREVIEW COMPONENT
- * Tracking architectural progress.
- */
-export function App() {
-  return (
-    <div className="min-h-screen bg-slate-50 p-8 flex items-center justify-center font-sans text-slate-800">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center text-white shadow-lg shadow-emerald-100">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">Users Slice</h2>
-            <p className="text-xs text-slate-400 font-mono">src/slices/usersSlice.ts</p>
-          </div>
-        </div>
-        
-        <ul className="space-y-3">
-          <li className="flex items-center gap-2 text-sm text-slate-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-            Action: <code className="bg-slate-100 px-1 rounded text-emerald-700">receiveUsers</code>
-          </li>
-          <li className="flex items-center gap-2 text-sm text-slate-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-            Action: <code className="bg-slate-100 px-1 rounded text-emerald-700">addAnswerToUser</code>
-          </li>
-          <li className="flex items-center gap-2 text-sm text-slate-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-            Action: <code className="bg-slate-100 px-1 rounded text-emerald-700">addQuestionToUser</code>
-          </li>
-        </ul>
-
-        <div className="mt-8 pt-6 border-t border-slate-100">
-          <p className="text-[11px] uppercase tracking-wider font-bold text-slate-400">Status</p>
-          <p className="text-sm text-emerald-600 font-medium">Ready for state integration</p>
-        </div>
-      </div>
-    </div>
-  );
-}
