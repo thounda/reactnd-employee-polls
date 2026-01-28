@@ -4,48 +4,30 @@
  * CATEGORY: Redux Actions / Users
  */
 
-// We import types to ensure the action payloads match our state structure
-interface User {
-  id: string;
-  name: string;
-  avatarURL: string;
-  answers: { [qid: string]: string };
-  questions: string[];
-}
-
-interface Users {
-  [id: string]: User;
-}
-
-interface Question {
-  id: string;
-  author: string;
-  timestamp: number;
-  optionOne: { votes: string[]; text: string };
-  optionTwo: { votes: string[]; text: string };
-}
+import { Users, Question } from '../types'; // Assuming these are in a central types file
 
 // Action Types
-export const RECEIVE_USERS = 'RECEIVE_USERS' as const;
-export const ADD_USER_QUESTION = 'ADD_USER_QUESTION' as const;
-export const ADD_USER_ANSWER = 'ADD_USER_ANSWER' as const;
+export const RECEIVE_USERS = 'RECEIVE_USERS';
+export const ADD_USER_QUESTION = 'ADD_USER_QUESTION';
+export const ADD_USER_ANSWER = 'ADD_USER_ANSWER';
 
 /**
  * Action creator to load the initial set of users.
+ * @param {Users} users - The users object from the API.
  */
 export function receiveUsers(users: Users) {
   return {
-    type: RECEIVE_USERS,
+    type: RECEIVE_USERS as typeof RECEIVE_USERS,
     users,
   };
 }
 
 /**
- * Action creator to update a user's 'answers' property.
+ * Action creator to update a user's 'answers' property when they vote.
  */
 export function addUserAnswer({ authedUser, qid, answer }: { authedUser: string, qid: string, answer: string }) {
   return {
-    type: ADD_USER_ANSWER,
+    type: ADD_USER_ANSWER as typeof ADD_USER_ANSWER,
     authedUser,
     qid,
     answer,
@@ -53,12 +35,12 @@ export function addUserAnswer({ authedUser, qid, answer }: { authedUser: string,
 }
 
 /**
- * Action creator to update a user's 'questions' property.
- * EXPECTS: The complete question object.
+ * Action creator to update a user's 'questions' array when they create a new poll.
+ * @param {Question} question - The complete question object.
  */
 export function addUserQuestion(question: Question) {
   return {
-    type: ADD_USER_QUESTION,
+    type: ADD_USER_QUESTION as typeof ADD_USER_QUESTION,
     question,
   };
 }

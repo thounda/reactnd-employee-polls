@@ -1,126 +1,106 @@
 import React from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 /**
  * FILE: src/components/Nav.tsx
- * DESCRIPTION: 
- * Top navigation bar for the Employee Polls application.
- * Integrated with global Redux state for user display and logout.
- * FIX: Replaced library imports with window-level resolution to bypass environment issues.
+ * DESCRIPTION:
+ * Premium Navigation bar featuring:
+ * - Glassmorphism background effect.
+ * - Active state indicators with bold underlines.
+ * - User profile summary with quick-logout.
+ * UPDATED: Optimized to use global Redux access to prevent build-time resolution errors.
  */
 
-// Inline SVG Icons for zero-dependency reliability
-const Icons = {
-  Home: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-  ),
-  PlusSquare: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
-  ),
-  Trophy: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55-.47.98-.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
-  ),
-  LogOut: () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-  )
-};
+const Nav: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-interface NavProps {
-  activePath: string;
-  onNavigate: (path: string) => void;
-}
-
-const Nav: React.FC<NavProps> = ({ activePath, onNavigate }) => {
-  // Safe resolution of hooks and actions
-  const useSelector = (window as any).ReactRedux?.useSelector || (() => ({}));
+  // Safely access Redux hooks from the global window object
+  const useSelector = (window as any).ReactRedux?.useSelector || (() => null);
   const useDispatch = (window as any).ReactRedux?.useDispatch || (() => () => {});
-  const logout = (window as any).AppActions?.logout; // Assumed exposure in store.tsx
-
   const dispatch = useDispatch();
-  
-  // Access state with flexible typing
-  const authedUserId = useSelector((state: any) => state.app?.authedUser);
-  const users = useSelector((state: any) => state.app?.users || {});
-  
-  const authedUser = authedUserId ? users[authedUserId] : null;
 
-  const handleLogout = () => {
-    if (logout) {
-      dispatch(logout());
-    } else {
-      // Fallback if action is not exposed globally yet
-      dispatch({ type: 'app/logout' });
-    }
+  // Select the authenticated user ID and the corresponding user object from state
+  const authedUserId = useSelector((state: any) => state.app?.authedUser || state.authedUser);
+  const user = useSelector((state: any) => {
+    const users = state.app?.users || state.users || {};
+    return authedUserId ? users[authedUserId] : null;
+  });
+
+  const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // Dispatch via string-based type to avoid direct slice import issues
+    dispatch({ type: 'authedUser/logoutAuthedUser' });
+    navigate('/login');
   };
 
-  const navItems = [
-    { id: 'dashboard', label: 'Home', icon: <Icons.Home /> },
-    { id: 'leaderboard', label: 'Leaderboard', icon: <Icons.Trophy /> },
-    { id: 'add', label: 'New Poll', icon: <Icons.PlusSquare /> },
-  ];
+  // Helper to determine if a link is active
+  const isActive = (path: string) => location.pathname === path;
+
+  const navLinkClass = (path: string) => `
+    relative h-full flex items-center px-4 text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300
+    ${isActive(path) ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-900'}
+  `;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-center h-20">
-          <div className="flex items-center space-x-2">
-            <div className="mr-8 flex items-center space-x-3 group cursor-pointer" onClick={() => onNavigate('dashboard')}>
-              <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg transition-transform group-hover:scale-105">
-                <span className="font-black text-xl italic">P</span>
+    <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
+      <div className="max-w-7xl mx-auto px-6 lg:px-10">
+        <div className="flex justify-between h-20 items-center">
+          
+          {/* Brand/Logo Area */}
+          <div className="flex items-center space-x-12 h-full">
+            <Link to="/" className="flex items-center space-x-2 group">
+              <div className="w-8 h-8 bg-slate-900 flex items-center justify-center rotate-45 group-hover:rotate-0 transition-transform duration-500">
+                <span className="text-white font-black text-xs -rotate-45 group-hover:rotate-0 transition-transform">W</span>
               </div>
-              <span className="hidden lg:block font-black text-slate-900 tracking-tighter uppercase text-lg">
-                Polls<span className="text-indigo-600">Hub</span>
+              <span className="font-black text-xl tracking-tighter italic uppercase text-slate-900">
+                Would<span className="text-indigo-600">You?</span>
               </span>
-            </div>
-            
-            <div className="flex items-center space-x-1">
-              {navItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => onNavigate(item.id)}
-                  className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-                    activePath === item.id
-                      ? 'bg-slate-900 text-white shadow-xl shadow-slate-200'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  {item.icon}
-                  <span className="hidden md:inline">{item.label}</span>
-                </button>
-              ))}
+            </Link>
+
+            {/* Main Links */}
+            <div className="hidden md:flex h-full items-center">
+              <Link to="/" className={navLinkClass('/')}>
+                Home
+                {isActive('/') && <span className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-full"></span>}
+              </Link>
+              <Link to="/add" className={navLinkClass('/add')}>
+                New Poll
+                {isActive('/add') && <span className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-full"></span>}
+              </Link>
+              <Link to="/leaderboard" className={navLinkClass('/leaderboard')}>
+                Leaderboard
+                {isActive('/leaderboard') && <span className="absolute bottom-0 left-0 w-full h-1 bg-indigo-600 rounded-t-full"></span>}
+              </Link>
             </div>
           </div>
 
-          {authedUser && (
-            <div className="flex items-center space-x-6 border-l border-slate-100 pl-6">
+          {/* User Profile & Actions */}
+          {user && (
+            <div className="flex items-center space-x-6">
               <div className="hidden sm:flex flex-col items-end">
-                <span className="text-xs font-black text-slate-900 uppercase tracking-tight">
-                  {authedUser.name}
-                </span>
-                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest opacity-80">
-                  {authedUser.id}
-                </span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Logged in as</span>
+                <span className="text-sm font-black text-slate-900 uppercase tracking-tight">{user.name}</span>
               </div>
               
-              <div className="relative">
-                <img
-                  src={authedUser.avatarURL}
-                  alt={authedUser.name}
-                  className="w-11 h-11 rounded-2xl border-2 border-white shadow-md bg-slate-100 object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(authedUser.name)}&background=6366f1&color=fff`;
-                  }}
+              <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-300"></div>
+                <img 
+                  src={user.avatarURL} 
+                  alt={user.name} 
+                  className="relative h-10 w-10 rounded-full border-2 border-white object-cover shadow-sm"
+                  onError={(e) => (e.currentTarget.src = `https://ui-avatars.com/api/?name=${user.name}&background=random`)}
                 />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
               </div>
 
               <button
                 onClick={handleLogout}
-                className="p-2.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all group"
-                title="Sign Out"
+                className="group flex items-center space-x-2 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 px-4 py-2 rounded-xl transition-all duration-300 border border-slate-100 hover:border-red-100"
               >
-                <div className="group-hover:translate-x-0.5 transition-transform">
-                  <Icons.LogOut />
-                </div>
+                <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+                <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
               </button>
             </div>
           )}
