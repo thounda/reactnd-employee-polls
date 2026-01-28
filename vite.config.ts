@@ -6,7 +6,7 @@ import react from '@vitejs/plugin-react';
  * Description: Optimized Vite configuration for React TypeScript projects.
  * We've removed the manual 'jsx' loaders because the react-jsx transform 
  * in your tsconfig handles this more cleanly.
- */
+ **/
 export default defineConfig({
   plugins: [
     react({
