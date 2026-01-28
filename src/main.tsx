@@ -2,7 +2,7 @@
  * FILE: src/main.tsx
  * PROJECT: Employee Polls Application
  * DESCRIPTION:
- * Standard React entry point. Imports the App module and mounts it.
+ * React entry point. Note the .tsx extension is required for JSX support.
  */
 
 import React from 'react';
@@ -11,11 +11,13 @@ import App from './App';
 
 const container = document.getElementById('root');
 
-if (container) {
-  const root = createRoot(container);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+if (!container) {
+  throw new Error("No root element found with id 'root'");
 }
+
+const root = createRoot(container);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
