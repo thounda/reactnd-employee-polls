@@ -1,11 +1,10 @@
 /**
- * FILE: src/store/index.ts
- * DESCRIPTION:
- * Barrel file for the store folder.
- * This simplifies imports throughout the app. 
- * We use a single named export here because store.ts 
- * exports the store instance as a named constant.
+ * File: src/store/index.ts
+ * Purpose: Central export point for the Redux store and custom hooks.
+ * * Providing a single entry point simplifies imports throughout the 
+ * component tree, allowing developers to import 'store', 'useAppDispatch', 
+ * and 'useAppSelector' from a single location.
  */
 
-// Export everything from store.ts (store, RootState, and AppDispatch)
 export * from './store';
+export * from './hooks';
