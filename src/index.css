@@ -1,15 +1,29 @@
-@import url('https://www.google.com/search?q=https://fonts.googleapis.com/css2%3Ffamily%3DInter:wght%40300%3B400%3B500%3B600%3B700%26display%3Dswap');
+/* * FILE: src/index.css
+
+DESCRIPTION: Global stylesheet containing Tailwind CSS directives.
+
+This file should be imported in your entry point file (usually main.tsx or index.tsx).
+*/
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* * Optional: Custom global overrides to match the premium look.
+
+These ensure the "Selection" and "Smooth Scroll" behaviors are consistent.
+*/
 @layer base {
+html {
+-webkit-tap-highlight-color: transparent;
+scroll-behavior: smooth;
+}
+
 body {
-margin: 0;
-font-family: 'Inter', system-ui, -apple-system, sans-serif;
--webkit-font-smoothing: antialiased;
--moz-osx-font-smoothing: grayscale;
-@apply bg-gray-50 text-gray-900 min-h-screen;
+@apply antialiased text-slate-900 bg-slate-50;
+}
+
+::selection {
+@apply bg-blue-100 text-blue-900;
 }
 }

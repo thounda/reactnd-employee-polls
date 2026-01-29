@@ -1,23 +1,16 @@
-/**
- * File: src/components/AnsweredPoll.tsx
- * Description: A presentational component that displays the statistical results 
- * of a poll after the user has voted. It calculates percentages, highlights 
- * the user's specific choice, and identifies the current leading option.
- */
-
 import React from 'react';
 
 /**
- * Interface for individual poll options
+ * FILE: src/components/AnsweredPoll.tsx
+ * DESCRIPTION: A presentational component displaying poll statistics.
+ * Refactored to match the premium design language of the new QuestionPage.
  */
+
 interface PollOption {
   votes: string[];
   text: string;
 }
 
-/**
- * Interface for the Question object structure
- */
 interface Question {
   optionOne: PollOption;
   optionTwo: PollOption;
@@ -26,99 +19,94 @@ interface Question {
   timestamp?: number;
 }
 
-/**
- * Component Props
- * @param question - The full question object containing options and vote arrays
- * @param authedUser - The ID of the currently logged-in user to determine their selection
- */
 interface AnsweredPollProps {
   question: Question;
   authedUser: string;
 }
 
 const AnsweredPoll: React.FC<AnsweredPollProps> = ({ question, authedUser }) => {
-  // 1. Calculate the necessary vote totals
   const optionOneVotes = question.optionOne.votes.length;
   const optionTwoVotes = question.optionTwo.votes.length;
   const totalVotes = optionOneVotes + optionTwoVotes;
 
-  // 2. Identify which option the user clicked
   const userSelected = question.optionOne.votes.includes(authedUser)
     ? 'optionOne'
     : question.optionTwo.votes.includes(authedUser)
     ? 'optionTwo'
     : null;
 
-  // 3. Percentage calculation helper
   const calculatePercentage = (votes: number) => {
-    if (totalVotes === 0) return '0%';
-    return `${((votes / totalVotes) * 100).toFixed(1)}%`;
+    if (totalVotes === 0) return 0;
+    return Math.round((votes / totalVotes) * 100);
   };
 
-  /**
-   * Helper to render result cards for each option
-   */
   const renderOptionResult = (
     option: 'optionOne' | 'optionTwo', 
     votes: number, 
     isUserChoice: boolean
   ) => {
-    const percentage = calculatePercentage(votes);
+    const pct = calculatePercentage(votes);
     const text = question[option].text;
-    
-    // UI Logic: Highlight user's choice with indigo, winning/leading with yellow
-    const userChoiceClasses = 'border-2 border-indigo-700 bg-indigo-50 shadow-md';
-    const winningClasses = votes > 0 && votes >= Math.max(optionOneVotes, optionTwoVotes) 
-      ? 'bg-yellow-100 border-2 border-yellow-500' 
-      : 'bg-gray-50 border border-gray-200';
+    const label = option === 'optionOne' ? 'Alpha' : 'Beta';
 
     return (
       <div 
         key={option} 
-        className={`relative p-5 rounded-xl transition-all duration-300 ${isUserChoice ? userChoiceClasses : winningClasses} mb-4`}
+        className={`relative p-8 rounded-[2rem] border-2 transition-all duration-500 overflow-hidden ${
+          isUserChoice 
+            ? 'border-indigo-500 bg-indigo-50/30 shadow-xl shadow-indigo-100/50' 
+            : 'border-slate-50 bg-slate-50/50'
+        }`}
       >
-        <p className="text-lg font-bold text-gray-800 mb-2">
-          {text}
-        </p>
-        
-        {/* "Your Vote" Badge - only visible on the option the user chose */}
         {isUserChoice && (
-          <div className="absolute top-0 right-0 transform -translate-y-1/2 translate-x-1/2 px-3 py-1 bg-indigo-600 text-white text-xs font-black rounded-full shadow-lg z-10 uppercase tracking-tighter">
-            Your Vote
+          <div className="absolute -top-3 left-8 bg-indigo-600 text-white text-[8px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg z-10">
+            Your Decision
           </div>
         )}
+
+        <div className="flex justify-between items-start mb-4">
+          <h3 className={`text-lg font-bold uppercase tracking-tight leading-tight max-w-[70%] ${
+            isUserChoice ? 'text-indigo-900' : 'text-slate-600'
+          }`}>
+            {text}
+          </h3>
+          <span className="text-2xl font-black text-slate-900">{pct}%</span>
+        </div>
         
-        {/* Progress Bar Container */}
-        <div className="w-full bg-gray-200 rounded-full h-4 mt-2 overflow-hidden">
+        <div className="relative h-3 w-full bg-slate-200/50 rounded-full overflow-hidden mb-4">
           <div 
-            className="bg-indigo-600 h-4 rounded-full transition-all duration-1000 ease-out" 
-            style={{ width: percentage }}
+            className={`absolute top-0 left-0 h-full transition-all duration-1000 ease-out ${
+              isUserChoice ? 'bg-indigo-600' : 'bg-slate-400'
+            }`} 
+            style={{ width: `${pct}%` }}
           ></div>
         </div>
-
-        <div className="flex justify-between items-center text-sm font-medium mt-3">
-          <span className="text-indigo-700 font-bold text-base">{percentage}</span>
-          <span className="text-gray-600 bg-white/50 px-2 py-0.5 rounded border border-gray-100">
-            {votes} / {totalVotes} votes
+        
+        <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
+          <span className={isUserChoice ? 'text-indigo-500' : ''}>
+            {votes} {votes === 1 ? 'Participant' : 'Participants'}
           </span>
+          <span>Selection {label}</span>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="w-full space-y-4 px-2">
-      <div className="flex items-center justify-center space-x-2 mb-6">
-        <div className="h-px w-8 bg-gray-300"></div>
-        <h2 className="text-xl font-black text-gray-800 uppercase tracking-widest">Results</h2>
-        <div className="h-px w-8 bg-gray-300"></div>
+    <div className="w-full space-y-6">
+      <div className="flex flex-col items-center justify-center space-y-2 mb-8">
+        <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em]">Final Tallies</span>
+        <h2 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">Results</h2>
       </div>
       
-      {renderOptionResult('optionOne', optionOneVotes, userSelected === 'optionOne')}
-      {renderOptionResult('optionTwo', optionTwoVotes, userSelected === 'optionTwo')}
+      <div className="grid grid-cols-1 gap-6">
+        {renderOptionResult('optionOne', optionOneVotes, userSelected === 'optionOne')}
+        {renderOptionResult('optionTwo', optionTwoVotes, userSelected === 'optionTwo')}
+      </div>
 
-      <div className="mt-8 pt-4 border-t border-gray-100 text-center">
-        <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
+      <div className="pt-10 flex flex-col items-center">
+        <div className="h-1 w-12 bg-slate-100 rounded-full mb-4"></div>
+        <p className="text-[10px] text-slate-400 uppercase tracking-[0.3em] font-black">
           Total Participation: {totalVotes}
         </p>
       </div>

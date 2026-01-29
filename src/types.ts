@@ -1,15 +1,9 @@
 /**
-
 FILE: src/types.ts
-
 DESCRIPTION:
-
 Centralized TypeScript interfaces for the Employee Polls application.
-
 This file defines the shape of Users, Questions, and their nested objects
-
 to ensure type safety across slices and components.
-
 CATEGORY: Architecture (TypeScript Support)
 */
 
@@ -18,7 +12,9 @@ id: string;
 password?: string;
 name: string;
 avatarURL: string;
+/** answers: lookup table where key is question ID, value is the chosen option /
 answers: { [qid: string]: 'optionOne' | 'optionTwo' };
+/* questions: array of question IDs created by the user */
 questions: string[];
 }
 
@@ -27,7 +23,7 @@ export interface Users {
 }
 
 export interface QuestionOption {
-votes: string[];
+votes: string[]; // Array of user IDs
 text: string;
 }
 
@@ -42,3 +38,7 @@ optionTwo: QuestionOption;
 export interface Questions {
 [qid: string]: Question;
 }
+
+/** * UI-specific helper for component props or selection state
+*/
+export type VoteOption = 'optionOne' | 'optionTwo';

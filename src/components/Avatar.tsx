@@ -1,66 +1,72 @@
-/**
- * File: src/components/Avatar.tsx
- * Description: A reusable TypeScript component to display a user's profile picture.
- * It ensures consistent sizing and styling using Tailwind CSS.
- */
-
 import React from 'react';
 
 /**
- * Props definition for the Avatar component
+ * File: src/components/Avatar.tsx
+ * Description: A reusable TypeScript component to display a user's profile picture.
+ * Features:
+ * - Smart fallback to UI-Avatars based on the user's name.
+ * - Customizable sizing and border styles.
+ * - Smooth transition animations.
  */
+
 interface AvatarProps {
-  /** The URL or path of the avatar image (e.g., '/avatars/mtsamis.png') */
+  /** The URL or path of the avatar image */
   url?: string;
-  /** The name of the user for accessibility alt text */
+  /** The name of the user for accessibility and fallback generation */
   name: string;
   /** Tailwind classes for dimensions, defaults to 'w-12 h-12' */
   size?: string;
-  /** Optional ring/border highlight for specific UI contexts (like Leaderboard) */
+  /** Optional ring/border highlight for specific UI contexts */
   border?: boolean;
+  /** Additional Tailwind classes for layout positioning */
+  className?: string;
 }
 
 const Avatar: React.FC<AvatarProps> = ({ 
   url, 
   name, 
   size = 'w-12 h-12', 
-  border = false 
+  border = false,
+  className = ''
 }) => {
-  // Constant for the fallback image
-  const PLACEHOLDER_URL = "https://placehold.co/100x100/374151/ffffff?text=User";
+  // Generate a dynamic fallback based on the user's initials
+  const FALLBACK_URL = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff&bold=true`;
   
-  // Resolve the image source
-  const imageUrl = url || PLACEHOLDER_URL;
+  // Resolve initial source
+  const [imgSrc, setImgSrc] = React.useState<string>(url || FALLBACK_URL);
+
+  // Update source if prop changes
+  React.useEffect(() => {
+    setImgSrc(url || FALLBACK_URL);
+  }, [url, FALLBACK_URL]);
 
   return (
     <div 
       className={`
+        relative
         flex-shrink-0 
         rounded-full 
         overflow-hidden 
-        shadow-sm 
-        bg-gray-200
+        bg-slate-100
         ${size} 
-        ${border ? 'ring-2 ring-indigo-500 ring-offset-2' : 'border border-gray-100'}
-        transition-transform duration-200
+        ${border ? 'ring-2 ring-indigo-500 ring-offset-2' : 'border border-slate-100'}
+        transition-all duration-300 ease-in-out
+        ${className}
       `}
     >
       <img
         className="w-full h-full object-cover"
-        src={imageUrl}
+        src={imgSrc}
         alt={`${name}'s avatar`}
-        /**
-         * Error handler for broken local paths.
-         * Note: If url is 'public/avatars/...', browser may need it as '/avatars/...'
-         */
-        onError={(e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-          const target = e.currentTarget;
-          if (target.src !== PLACEHOLDER_URL) {
-            target.onerror = null; // Clean up listener
-            target.src = PLACEHOLDER_URL;
+        loading="lazy"
+        onError={() => {
+          if (imgSrc !== FALLBACK_URL) {
+            setImgSrc(FALLBACK_URL);
           }
         }}
       />
+      {/* Subtle overlay for depth */}
+      <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-black/5 rounded-full" />
     </div>
   );
 };

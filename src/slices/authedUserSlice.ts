@@ -1,42 +1,64 @@
 /**
- * FILE: src/slices/authedUserSlice.ts
- * DESCRIPTION:
- * Manages the currently authenticated user's ID.
- * Defaults to null if no user is logged in.
+ * FILE: src/slices/authedSlice.ts
+ * DESCRIPTION: 
+ * Modern Redux Toolkit Slice for Authentication.
+ * This file replaces both the legacy action creators and the old reducer files.
+ * * VS CODE INSTRUCTIONS:
+ * This code is optimized for your local project. Ensure 'react-redux-loading-bar' 
+ * and '@reduxjs/toolkit' are installed in your package.json.
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+// These imports are required for your local project
+import { showLoading, hideLoading } from 'react-redux-loading-bar';
+import { AppDispatch } from '../store';
 
-/**
- * Define the state type - it's either a string (the user ID) or null
- */
-type AuthedUserState = string | null;
+interface AuthedUserState {
+  value: string | null;
+}
 
-const initialState: AuthedUserState = null;
+const initialState: AuthedUserState = {
+  value: null,
+};
 
-const authedUserSlice = createSlice({
+const authedSlice = createSlice({
   name: 'authedUser',
-  initialState: initialState as AuthedUserState,
+  initialState,
   reducers: {
     /**
-     * Action: setAuthedUser
-     * Purpose: Sets the ID of the user currently logged into the application.
+     * Sets the currently authenticated user ID.
+     * Replaces the old SET_AUTHED_USER action constant.
      */
-    setAuthedUser: (_state, action: PayloadAction<string | null>) => {
-      return action.payload;
+    setAuthedUser: (state, action: PayloadAction<string | null>) => {
+      state.value = action.payload;
     },
     /**
-     * Action: logoutAuthedUser
-     * Purpose: Clears the authenticated user state.
+     * Clears the authenticated user (Logout).
+     * Replaces the old LOGOUT_AUTHED_USER action constant.
      */
-    logoutAuthedUser: () => {
-      return null;
-    }
-  }
+    logoutAuthedUser: (state) => {
+      state.value = null;
+    },
+  },
 });
 
-// Named exports for actions
-export const { setAuthedUser, logoutAuthedUser } = authedUserSlice.actions;
+// Export the generated actions for use in components or thunks
+export const { setAuthedUser, logoutAuthedUser } = authedSlice.actions;
 
-// Export the reducer as the default export
-export default authedUserSlice.reducer;
+/**
+ * handleSetAuthedUser Thunk
+ * Manages the asynchronous flow of logging in a user, including the loading bar.
+ */
+export function handleSetAuthedUser(id: string) {
+  return (dispatch: AppDispatch) => {
+    // Check if dispatch functions exist to avoid errors in different environments
+    if (typeof showLoading === 'function') dispatch(showLoading());
+    
+    dispatch(setAuthedUser(id));
+    
+    if (typeof hideLoading === 'function') dispatch(hideLoading());
+  };
+}
+
+// Export the reducer as default for the store configuration
+export default authedSlice.reducer;
