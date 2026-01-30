@@ -1,24 +1,27 @@
 import React from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
+
+
+import { useAppSelector } from '../store/hooks';
+
+
 
 /**
  * FILE: src/components/RequireAuth.tsx
  * DESCRIPTION:
  * Premium Client-side route protection component.
- * - Checks Redux state for an authenticated user.
- * - Redirects unauthenticated users to /login.
- * - Preserves the 'from' location for post-login redirection.
- * FIX: Reverted to global Redux resolution to ensure compatibility with the build environment.
+ * Supports the 'children' pattern for wrapping protected routes in App.tsx.
  */
 
-const RequireAuth: React.FC = () => {
+interface RequireAuthProps {
+  children: React.ReactNode;
+}
+
+const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
   
-  // Safely access Redux hooks from the global window object to bypass resolution errors
-  const useSelector = (window as any).ReactRedux?.useSelector || (() => undefined);
-  
   // Retrieve the authedUser from the Redux state. 
-  const authedUser = useSelector((state: any) => state.app?.authedUser ?? state.authedUser);
+  const authedUser = useAppSelector((state: any) => state.authedUser);
 
   // Handle the "Initialization" state.
   // If authedUser is undefined, the app might still be hydrating state.
@@ -44,8 +47,8 @@ const RequireAuth: React.FC = () => {
     );
   }
 
-  // If authenticated, render the child routes via Outlet
-  return <Outlet />;
+  // If authenticated, render the children
+  return <>{children}</>;
 };
 
 export default RequireAuth;
