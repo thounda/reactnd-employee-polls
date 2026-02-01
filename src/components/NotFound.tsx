@@ -1,4 +1,6 @@
 import React from 'react';
+
+// VS CODE USERS: Uncomment this import in your local project
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -8,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
  */
 
 const NotFound: React.FC = () => {
+
   const navigate = useNavigate();
 
   return (

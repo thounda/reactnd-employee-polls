@@ -1,16 +1,13 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-
-
 import { useAppSelector } from '../store/hooks';
-
-
+import { RootState } from '../store/store';
 
 /**
  * FILE: src/components/RequireAuth.tsx
  * DESCRIPTION:
- * Premium Client-side route protection component.
- * Supports the 'children' pattern for wrapping protected routes in App.tsx.
+ * This is your "Gatekeeper" component. It ensures that only logged-in users
+ * can see specific pages (Dashboard, New Poll, etc.).
  */
 
 interface RequireAuthProps {
@@ -19,24 +16,28 @@ interface RequireAuthProps {
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const location = useLocation();
-  
-  // Retrieve the authedUser from the Redux state. 
-  const authedUser = useAppSelector((state: any) => state.authedUser);
+  const authedUser = useAppSelector((state: RootState) => state.authedUser);
 
-  // Handle the "Initialization" state.
-  // If authedUser is undefined, the app might still be hydrating state.
+  // 1. LOADING STATE: 
+  // If authedUser is undefined, it means we haven't finished checking 
+  // the 'mock database' yet. Show a spinner so we don't redirect prematurely.
   if (authedUser === undefined) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-slate-50">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-600 rounded-full animate-spin"></div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Verifying Identity</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+            Verifying Identity
+          </p>
         </div>
       </div>
     );
   }
 
-  // Redirect to login if not authenticated (null or empty string)
+  // 2. UNAUTHORIZED STATE:
+  // If authedUser is null (or empty), redirect to Login.
+  // We pass 'location' into the 'state' prop so that after the user logs in,
+  // we can send them back to where they were (e.g., a specific poll URL).
   if (!authedUser) {
     return (
       <Navigate 
@@ -47,7 +48,8 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
     );
   }
 
-  // If authenticated, render the children
+  // 3. AUTHORIZED STATE:
+  // User is logged in, show them the requested page!
   return <>{children}</>;
 };
 

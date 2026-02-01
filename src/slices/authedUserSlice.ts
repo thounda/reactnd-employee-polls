@@ -1,27 +1,21 @@
 /**
- * FILE: src/slices/authedSlice.ts
+ * FILE: src/slices/authedUserSlice.ts
  * DESCRIPTION: 
  * Modern Redux Toolkit Slice for Authentication.
- * This file replaces both the legacy action creators and the old reducer files.
- * * VS CODE INSTRUCTIONS:
- * This code is optimized for your local project. Ensure 'react-redux-loading-bar' 
- * and '@reduxjs/toolkit' are installed in your package.json.
+ * Replaces legacy action creators and reducers.
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-// These imports are required for your local project
 import { showLoading, hideLoading } from 'react-redux-loading-bar';
 import { AppDispatch } from '../store';
+import { AuthedUserState } from './types';
 
-interface AuthedUserState {
-  value: string | null;
-}
-
+// Initial state using the type defined in types.ts
 const initialState: AuthedUserState = {
   value: null,
 };
 
-const authedSlice = createSlice({
+const authedUserSlice = createSlice({
   name: 'authedUser',
   initialState,
   reducers: {
@@ -42,23 +36,36 @@ const authedSlice = createSlice({
   },
 });
 
-// Export the generated actions for use in components or thunks
-export const { setAuthedUser, logoutAuthedUser } = authedSlice.actions;
+// Export actions for use in components or thunks
+export const { setAuthedUser, logoutAuthedUser } = authedUserSlice.actions;
 
 /**
  * handleSetAuthedUser Thunk
  * Manages the asynchronous flow of logging in a user, including the loading bar.
+ * This is used for login actions in the UI.
  */
 export function handleSetAuthedUser(id: string) {
   return (dispatch: AppDispatch) => {
-    // Check if dispatch functions exist to avoid errors in different environments
-    if (typeof showLoading === 'function') dispatch(showLoading());
+    // Standard Redux Loading Bar integration
+    dispatch(showLoading());
     
     dispatch(setAuthedUser(id));
     
-    if (typeof hideLoading === 'function') dispatch(hideLoading());
+    dispatch(hideLoading());
   };
 }
 
-// Export the reducer as default for the store configuration
-export default authedSlice.reducer;
+/**
+ * handleLogout Thunk
+ * Manages the flow for logging out.
+ */
+export function handleLogout() {
+  return (dispatch: AppDispatch) => {
+    dispatch(showLoading());
+    dispatch(logoutAuthedUser());
+    dispatch(hideLoading());
+  };
+}
+
+// Export the reducer as default for store configuration
+export default authedUserSlice.reducer;

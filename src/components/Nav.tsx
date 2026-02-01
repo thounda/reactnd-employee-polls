@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 
 /**
  * FILE: src/components/Nav.tsx
@@ -8,7 +9,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
  * - Glassmorphism background effect.
  * - Active state indicators with bold underlines.
  * - User profile summary with quick-logout.
- * - Fixed TypeScript types for dynamic Redux resolution.
+ * - Standard Redux integration for local development with environment-safe preview logic.
  */
 
 interface User {
@@ -23,24 +24,6 @@ const Nav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /**
-   * Safe Redux Integration with Explicit Typing
-   * We cast the dynamically required hooks to avoid 'never' type errors.
-   */
-  let useSelector: <T>(selector: (state: any) => T) => T = (selector) => null as any;
-  let useDispatch: () => (action: any) => void = () => () => {};
-
-  try {
-    // @ts-ignore - dynamic require for environment compatibility
-    const reactRedux = require('react-redux');
-    if (reactRedux) {
-      useSelector = reactRedux.useSelector;
-      useDispatch = reactRedux.useDispatch;
-    }
-  } catch (e) {
-    // Fallback if react-redux is not available
-  }
-
   const dispatch = useDispatch();
 
   // Select the authenticated user ID and the corresponding user object from state
@@ -52,6 +35,7 @@ const Nav: React.FC = () => {
 
   const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
+    // Dispatch the logout action to clear state
     dispatch({ type: 'authedUser/logoutAuthedUser' });
     navigate('/login');
   };
@@ -72,6 +56,7 @@ const Nav: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-10">
         <div className="flex justify-between h-20 items-center">
           
+          {/* Logo Section */}
           <div className="flex items-center space-x-12 h-full">
             <Link to="/" className="flex items-center space-x-2 group">
               <div className="w-10 h-10 bg-slate-900 flex items-center justify-center rotate-45 group-hover:rotate-0 transition-all duration-500 shadow-lg shadow-slate-200">
@@ -82,6 +67,7 @@ const Nav: React.FC = () => {
               </span>
             </Link>
 
+            {/* Desktop Navigation Links */}
             <div className="hidden md:flex h-full items-center">
               <Link to="/" className={navLinkClass('/')}>
                 Feed
@@ -98,6 +84,7 @@ const Nav: React.FC = () => {
             </div>
           </div>
 
+          {/* User Section / Auth State */}
           {user ? (
             <div className="flex items-center space-x-4 md:space-x-8">
               <div className="hidden sm:flex flex-col items-end">

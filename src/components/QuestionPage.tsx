@@ -1,209 +1,181 @@
-import React from 'react';
-
 /**
- * FILE: src/components/QuestionPage.tsx
- * DESCRIPTION: Handles viewing and voting on a single poll.
- * UPDATED: Fixed TS2347 error by providing proper type signatures for dynamically resolved hooks.
+ * FILE: QuestionPage.tsx
+ * PATH: /src/components/QuestionPage.tsx
+ * * DESCRIPTION:
+ * This component represents the "Poll Detail" view in the "Employee Polls" application.
+ * It serves two primary functions:
+ * 1. Voting Interface: Displays two options as buttons if the authenticated user has not yet voted.
+ * 2. Results Interface: Displays progress bars and vote statistics if the user has already voted.
+ * * The component handles 404 states for invalid IDs and dynamically calculates 
+ * percentages and vote counts for the UI.
  */
 
-// --- Interfaces ---
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useParams, useNavigate } from 'react-router-dom';
 
-interface VoteOption {
-  votes: string[];
-  text: string;
-}
+// --- START: Redux Action Imports ---
+// We import handleAddAnswer from the questionsSlice to manage the voting process.
+import { handleAddAnswer } from '../slices/questionsSlice';
+// --- END: Redux Action Imports ---
 
-interface Question {
-  id: string;
-  author: string;
-  timestamp: number;
-  optionOne: VoteOption;
-  optionTwo: VoteOption;
-}
-
-interface User {
-  id: string;
-  name: string;
-  avatarURL: string;
-  answers: Record<string, string>;
-  questions: string[];
-}
+import { RootState } from '../slices/types';
 
 const QuestionPage: React.FC = () => {
-  /**
-   * Safe Dependency Injection with proper Type Definitions
-   */
-  let useSelector: <T>(selector: (state: any) => T) => T = (fn: any) => fn({});
-  let useDispatch: () => (action: any) => void = () => () => {};
-  let useParams: <T extends string | Record<string, string | undefined>>() => T = () => ({} as any);
-  let useNavigate: () => (path: string) => void = () => () => {};
-  let handleSaveAnswerAction: any = null;
-
-  try {
-    // Attempt to resolve from standard libraries
-    // @ts-ignore
-    const reactRedux = require('react-redux');
-    // @ts-ignore
-    const reactRouter = require('react-router-dom');
-    
-    useSelector = reactRedux.useSelector;
-    useDispatch = reactRedux.useDispatch;
-    useParams = reactRouter.useParams;
-    useNavigate = reactRouter.useNavigate;
-
-    try {
-      // @ts-ignore
-      const slices = require('../slices/questionsSlice');
-      handleSaveAnswerAction = slices.handleAddAnswer || slices.handleSaveAnswer;
-    } catch (e) {
-      handleSaveAnswerAction = (window as any).AppStore?.handleSaveAnswer || (window as any).handleAddAnswer;
-    }
-  } catch (e) {
-    // Global fallbacks
-    useSelector = (window as any).ReactRedux?.useSelector || useSelector;
-    useDispatch = (window as any).ReactRedux?.useDispatch || useDispatch;
-    useParams = (window as any).ReactRouterDOM?.useParams || useParams;
-    useNavigate = (window as any).ReactRouterDOM?.useNavigate || useNavigate;
-  }
-
-  // Fixing TS2347 by ensuring useParams signature accepts type arguments
-  const { question_id } = useParams<{ question_id: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { authedUser, questions, users } = useSelector((state: any) => {
-    const root = state.app || state;
-    return {
-      authedUser: typeof root.authedUser === 'object' ? root.authedUser.value : root.authedUser,
-      questions: root.questions || {},
-      users: root.users || {}
-    };
-  });
+  // Accessing global state for authenticated user, questions, and users dictionary
+  const authedUser = useSelector((state: RootState) => state.authedUser.value);
+  const users = useSelector((state: RootState) => state.users);
+  const questions = useSelector((state: RootState) => state.questions);
 
-  const question = (questions as Record<string, Question>)[question_id || ''];
-  const author = question ? (users as Record<string, User>)[question.author] : null;
+  const question = id ? questions[id] : null;
+  const author = question ? users[question.author] : null;
 
-  if (!question || !author || !authedUser) {
+  /**
+   * 404 FALLBACK LOGIC
+   * If the question ID in the URL doesn't match any question in the Redux state, 
+   * we display a 404 error page.
+   */
+  if (!question || !author) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 space-y-6">
-        <div className="text-9xl font-black text-slate-100">404</div>
-        <h2 className="text-2xl font-bold text-slate-900 uppercase tracking-tighter italic">Question Not Found</h2>
+      <div className="flex flex-col items-center justify-center p-10 text-center min-h-[50vh]">
+        <h1 className="text-9xl font-black text-gray-200 mb-4">404</h1>
+        <p className="text-2xl font-semibold text-gray-800">Poll Not Found</p>
+        <p className="text-gray-500 mt-2">The poll you are looking for does not exist or has been removed.</p>
         <button 
           onClick={() => navigate('/')}
-          className="px-8 py-4 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-200 active:scale-95"
+          className="mt-8 px-8 py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-all shadow-lg active:transform active:scale-95"
         >
-          Return to Dashboard
+          Back to Dashboard
         </button>
       </div>
     );
   }
 
-  const hasAnsweredOne = question.optionOne.votes.includes(authedUser);
-  const hasAnsweredTwo = question.optionTwo.votes.includes(authedUser);
-  const hasAnswered = hasAnsweredOne || hasAnsweredTwo;
-  const userVote = hasAnsweredOne ? 'optionOne' : 'optionTwo';
+  // Check participation status
+  const hasVoted = authedUser ? !!users[authedUser].answers[question.id] : false;
+  const myAnswer = authedUser ? users[authedUser].answers[question.id] : null;
 
-  const totalVotes = question.optionOne.votes.length + question.optionTwo.votes.length;
-  const optOnePct = totalVotes === 0 ? 0 : Math.round((question.optionOne.votes.length / totalVotes) * 100);
-  const optTwoPct = totalVotes === 0 ? 0 : Math.round((question.optionTwo.votes.length / totalVotes) * 100);
+  // Calculation of Poll Stats
+  const votesOne = question.optionOne.votes.length;
+  const votesTwo = question.optionTwo.votes.length;
+  const totalVotes = votesOne + votesTwo;
+  const percentOne = totalVotes > 0 ? Math.round((votesOne / totalVotes) * 100) : 0;
+  const percentTwo = totalVotes > 0 ? Math.round((votesTwo / totalVotes) * 100) : 0;
 
+  /**
+   * HANDLE VOTE
+   * START: Action Dispatch Logic
+   * This function dispatches the thunk that saves the answer to the mock database
+   * and updates both the Users and Questions slices in the store.
+   */
   const handleVote = (answer: 'optionOne' | 'optionTwo') => {
-    if (handleSaveAnswerAction) {
-      dispatch(handleSaveAnswerAction({ 
-        authedUser, 
-        qid: question.id, 
-        answer 
-      }));
+    if (authedUser && id) {
+      dispatch(handleAddAnswer({
+        authedUser,
+        qid: id,
+        answer
+      }) as any);
     }
   };
+  // END: Action Dispatch Logic
 
   return (
-    <div className="max-w-2xl mx-auto py-12 px-4">
-      <div className="bg-white rounded-[3rem] shadow-2xl shadow-slate-200 border border-slate-100 overflow-hidden">
-        <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex items-center space-x-4">
+    <div className="max-w-3xl mx-auto my-12 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden">
+      {/* Poll Header with Author Info */}
+      <div className="bg-indigo-600 px-8 py-4 flex items-center justify-between">
+        <span className="text-indigo-100 font-medium">Poll Created By</span>
+        <span className="text-white font-bold">{author.name}</span>
+      </div>
+      
+      <div className="p-8 flex flex-col items-center gap-10">
+        {/* Author Avatar */}
+        <div className="relative">
           <img 
             src={author.avatarURL} 
-            className="w-16 h-16 rounded-2xl object-cover bg-white shadow-sm border-2 border-white" 
-            alt={author.name}
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(author.name)}&background=6366f1&color=fff`;
-            }}
+            alt={author.name} 
+            className="w-40 h-40 rounded-full border-8 border-gray-50 shadow-inner object-cover"
           />
-          <div>
-            <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Inquiry by</span>
-            <h2 className="text-xl font-bold text-slate-900 leading-tight">{author.name}</h2>
-          </div>
         </div>
 
-        <div className="p-10 space-y-10">
-          <h1 className="text-4xl font-black text-slate-900 text-center uppercase italic tracking-tighter leading-none">
-            Would You <br/><span className="text-indigo-600">Rather...</span>
-          </h1>
+        <div className="w-full max-w-xl">
+          <h3 className="text-4xl font-black text-gray-900 mb-10 text-center tracking-tight">
+            Would You Rather...
+          </h3>
 
-          {!hasAnswered ? (
-            <div className="grid grid-cols-1 gap-4">
-              <button 
+          {!hasVoted ? (
+            /* VOTING INTERFACE */
+            <div className="grid grid-cols-1 gap-6">
+              <button
                 onClick={() => handleVote('optionOne')}
-                className="group relative p-8 rounded-[2rem] border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left active:scale-[0.98]"
+                className="group relative w-full py-6 px-8 bg-white border-2 border-indigo-500 text-indigo-600 font-black text-xl rounded-2xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all duration-300 shadow-md"
               >
-                <span className="block text-[10px] font-black text-slate-400 group-hover:text-indigo-400 uppercase mb-2 tracking-widest">Option Alpha</span>
-                <span className="text-xl font-bold text-slate-700 group-hover:text-indigo-900">{question.optionOne.text}</span>
+                {question.optionOne.text}
+                <div className="absolute inset-y-0 right-4 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-2xl">→</span>
+                </div>
               </button>
-
-              <div className="flex items-center justify-center">
-                <div className="h-[1px] bg-slate-100 flex-grow"></div>
-                <span className="px-4 py-1 bg-slate-900 text-white text-[9px] font-black uppercase tracking-[0.4em] rounded-full mx-4">VS</span>
-                <div className="h-[1px] bg-slate-100 flex-grow"></div>
+              
+              <div className="flex items-center gap-4 text-gray-300">
+                <div className="h-[1px] bg-gray-200 flex-grow"></div>
+                <span className="text-xs font-black tracking-widest uppercase">OR</span>
+                <div className="h-[1px] bg-gray-200 flex-grow"></div>
               </div>
 
-              <button 
+              <button
                 onClick={() => handleVote('optionTwo')}
-                className="group relative p-8 rounded-[2rem] border-2 border-slate-100 hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left active:scale-[0.98]"
+                className="group relative w-full py-6 px-8 bg-white border-2 border-indigo-500 text-indigo-600 font-black text-xl rounded-2xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all duration-300 shadow-md"
               >
-                <span className="block text-[10px] font-black text-slate-400 group-hover:text-indigo-400 uppercase mb-2 tracking-widest">Option Beta</span>
-                <span className="text-xl font-bold text-slate-700 group-hover:text-indigo-900">{question.optionTwo.text}</span>
+                {question.optionTwo.text}
+                <div className="absolute inset-y-0 right-4 flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-2xl">→</span>
+                </div>
               </button>
             </div>
           ) : (
-            <div className="space-y-6">
-              {[
-                { opt: question.optionOne, pct: optOnePct, key: 'optionOne' as const, label: 'Alpha' },
-                { opt: question.optionTwo, pct: optTwoPct, key: 'optionTwo' as const, label: 'Beta' }
-              ].map(({ opt, pct, key, label }) => (
-                <div key={key} className={`relative p-8 rounded-[2rem] border-2 transition-all duration-500 ${userVote === key ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-50 bg-slate-50/50'}`}>
-                  {userVote === key && (
-                    <div className="absolute -top-3 left-8 bg-indigo-600 text-white text-[8px] font-black px-4 py-1.5 rounded-full uppercase tracking-[0.2em] shadow-lg">
-                      Your Decision
-                    </div>
+            /* RESULTS INTERFACE */
+            <div className="space-y-8">
+              {/* Option One Stats */}
+              <div className={`p-6 rounded-2xl border-2 transition-all ${myAnswer === 'optionOne' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-100 bg-gray-50'}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <p className="font-bold text-gray-800 text-xl flex-1">{question.optionOne.text}</p>
+                  {myAnswer === 'optionOne' && (
+                    <span className="bg-indigo-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-sm ml-4 whitespace-nowrap">Your Vote</span>
                   )}
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className={`text-lg font-bold uppercase tracking-tight leading-tight ${userVote === key ? 'text-indigo-900' : 'text-slate-600'}`}>
-                      {opt.text}
-                    </h3>
-                    <span className="text-2xl font-black text-slate-900">{pct}%</span>
-                  </div>
-                  
-                  <div className="relative h-3 w-full bg-slate-200/50 rounded-full overflow-hidden mb-4">
-                    <div 
-                      className={`absolute top-0 left-0 h-full transition-all duration-1000 ${userVote === key ? 'bg-indigo-600' : 'bg-slate-400'}`} 
-                      style={{ width: `${pct}%` }}
-                    ></div>
-                  </div>
-                  
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">
-                    <span>{opt.votes.length} Participants</span>
-                    <span>Selection {label}</span>
-                  </div>
                 </div>
-              ))}
-              
-              <div className="pt-8 flex justify-center">
-                <button 
-                  onClick={() => navigate('/')} 
-                  className="text-[10px] font-black text-slate-400 hover:text-indigo-600 uppercase tracking-[0.25em] transition-all flex items-center space-x-2"
-                >
-                  <span>← Back to Dashboard</span>
-                </button>
+                <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                  <div 
+                    className="bg-indigo-500 h-full transition-all duration-1000 ease-out" 
+                    style={{ width: `${percentOne}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between mt-4">
+                  <span className="text-lg font-black text-indigo-600">{percentOne}%</span>
+                  <span className="text-sm text-gray-500 font-bold">{votesOne} of {totalVotes} votes</span>
+                </div>
+              </div>
+
+              {/* Option Two Stats */}
+              <div className={`p-6 rounded-2xl border-2 transition-all ${myAnswer === 'optionTwo' ? 'border-indigo-500 bg-indigo-50 shadow-md' : 'border-gray-100 bg-gray-50'}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <p className="font-bold text-gray-800 text-xl flex-1">{question.optionTwo.text}</p>
+                  {myAnswer === 'optionTwo' && (
+                    <span className="bg-indigo-600 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full shadow-sm ml-4 whitespace-nowrap">Your Vote</span>
+                  )}
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+                  <div 
+                    className="bg-indigo-500 h-full transition-all duration-1000 ease-out" 
+                    style={{ width: `${percentTwo}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between mt-4">
+                  <span className="text-lg font-black text-indigo-600">{percentTwo}%</span>
+                  <span className="text-sm text-gray-500 font-bold">{votesTwo} of {totalVotes} votes</span>
+                </div>
               </div>
             </div>
           )}

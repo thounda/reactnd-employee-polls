@@ -30,6 +30,7 @@ const Avatar: React.FC<AvatarProps> = ({
   className = ''
 }) => {
   // Generate a dynamic fallback based on the user's initials
+  // Using a stable background color (indigo-500) for consistent branding
   const FALLBACK_URL = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff&bold=true`;
   
   // Resolve initial source
@@ -60,12 +61,13 @@ const Avatar: React.FC<AvatarProps> = ({
         alt={`${name}'s avatar`}
         loading="lazy"
         onError={() => {
+          // If the custom URL fails, fall back to the generated initials avatar
           if (imgSrc !== FALLBACK_URL) {
             setImgSrc(FALLBACK_URL);
           }
         }}
       />
-      {/* Subtle overlay for depth */}
+      {/* Subtle overlay for depth to prevent "flat" look on light backgrounds */}
       <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-black/5 rounded-full" />
     </div>
   );

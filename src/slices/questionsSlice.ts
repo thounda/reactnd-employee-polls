@@ -1,34 +1,19 @@
 /**
  * FILE: src/slices/questionsSlice.ts
  * DESCRIPTION: Manages the questions state and handles asynchronous thunks.
- * Includes handleInitialData, handleAddQuestion, and handleAddAnswer.
- * Fixed TypeScript 'unknown' type assignment errors and optimized for local project.
+ * Leverages centralized types and handles vote/question logic.
  */
 
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-// Local imports - ensure these paths are correct in your VS Code environment
 import { getInitialData, saveQuestion, saveQuestionAnswer } from '../utils/_DATA';
-import { receiveUsers, addQuestionToUser, addAnswerToUser, UsersState } from './usersSlice';
+import { receiveUsers, addQuestionToUser, addAnswerToUser } from './usersSlice';
+import { Question, QuestionsState, AnswerPayload, User } from './types';
 
-/**
- * Interfaces
- */
-export interface Question {
-  id: string;
-  author: string;
-  timestamp: number;
-  optionOne: { votes: string[]; text: string };
-  optionTwo: { votes: string[]; text: string };
-}
-
-export interface QuestionsState {
-  [key: string]: Question;
-}
-
-interface AnswerPayload {
-  authedUser: string;
-  qid: string;
-  answer: 'optionOne' | 'optionTwo';
+// Define a minimal RootState interface for thunk access
+interface RootState {
+  authedUser: { value: string | null };
+  users: { [key: string]: User };
+  questions: QuestionsState;
 }
 
 const initialState: QuestionsState = {};
@@ -40,12 +25,12 @@ const initialState: QuestionsState = {};
 export const handleInitialData = createAsyncThunk(
   'shared/initialData',
   async (_, { dispatch }) => {
-    // Cast the response from the mock API to resolve 'unknown' type errors
-    const data = await getInitialData() as { users: UsersState, questions: QuestionsState };
+    const data = await getInitialData() as { users: { [key: string]: User }, questions: QuestionsState };
     const { users, questions } = data;
     
+    // Distribute data to respective slices
     dispatch(receiveUsers(users));
-    dispatch(questionsSlice.actions.receiveQuestions(questions));
+    return questions; // Returned value is handled by extraReducers below
   }
 );
 
@@ -55,17 +40,18 @@ export const handleInitialData = createAsyncThunk(
 export const handleAddQuestion = createAsyncThunk(
   'questions/addQuestion',
   async ({ optionOneText, optionTwoText }: { optionOneText: string; optionTwoText: string }, { getState, dispatch }) => {
-    const state = getState() as any;
+    const state = getState() as RootState;
     const authedUser = state.authedUser.value;
+
+    if (!authedUser) throw new Error("User must be logged in to post a question.");
     
-    // Cast the returned question from the mock API to resolve type errors
     const question = await saveQuestion({
       optionOneText,
       optionTwoText,
       author: authedUser,
     }) as Question;
     
-    dispatch(questionsSlice.actions.addQuestion(question));
+    // Update users slice to include reference to this new question
     dispatch(addQuestionToUser({ authedUser, qid: question.id }));
     
     return question;
@@ -79,8 +65,10 @@ export const handleAddAnswer = createAsyncThunk(
   'questions/addAnswer',
   async (payload: AnswerPayload, { dispatch }) => {
     await saveQuestionAnswer(payload);
-    dispatch(questionsSlice.actions.addAnswer(payload));
+    
+    // Synchronize the users slice
     dispatch(addAnswerToUser(payload));
+    
     return payload;
   }
 );
@@ -89,20 +77,31 @@ const questionsSlice = createSlice({
   name: 'questions',
   initialState,
   reducers: {
+    // Standard synchronous actions if needed elsewhere
     receiveQuestions(_state, action: PayloadAction<QuestionsState>) {
       return action.payload;
     },
-    addQuestion(state, action: PayloadAction<Question>) {
-      state[action.payload.id] = action.payload;
-    },
-    addAnswer(state, action: PayloadAction<AnswerPayload>) {
-      const { authedUser, qid, answer } = action.payload;
-      if (state[qid]) {
-        state[qid][answer].votes.push(authedUser);
-      }
-    },
   },
+  extraReducers: (builder) => {
+    builder
+      // Handle data from handleInitialData
+      .addCase(handleInitialData.fulfilled, (_state, action) => {
+        return action.payload;
+      })
+      // Handle result from handleAddQuestion
+      .addCase(handleAddQuestion.fulfilled, (state, action: PayloadAction<Question>) => {
+        state[action.payload.id] = action.payload;
+      })
+      // Handle result from handleAddAnswer
+      .addCase(handleAddAnswer.fulfilled, (state, action: PayloadAction<AnswerPayload>) => {
+        const { authedUser, qid, answer } = action.payload;
+        if (state[qid]) {
+          // Immer handles the immutable update here
+          state[qid][answer].votes.push(authedUser);
+        }
+      });
+  }
 });
 
-export const { receiveQuestions, addQuestion, addAnswer } = questionsSlice.actions;
+export const { receiveQuestions } = questionsSlice.actions;
 export default questionsSlice.reducer;

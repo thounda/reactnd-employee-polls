@@ -1,8 +1,20 @@
+/**
+ * @file src/App.tsx
+ * @description
+ * Primary component for the Employee Polls application.
+ * Responsibilities:
+ * 1. Fetches initial data (users and questions) on mount.
+ * 2. Manages high-level routing using React Router.
+ * 3. Implements route guarding via the RequireAuth component.
+ * 4. Conditionally renders the Navigation bar based on auth state.
+ */
+
 import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import { handleInitialData } from './slices/questionsSlice';
+import { RootState } from './store/store';
 import Nav from './components/Nav';
 import Dashboard from './components/Dashboard';
 import NewQuestion from './components/NewQuestion';
@@ -12,30 +24,28 @@ import Login from './components/Login';
 import RequireAuth from './components/RequireAuth';
 import NotFound from './components/NotFound';
 
-/**
- * Note on Error 2559: 
- * This usually happens if RequireAuth is defined as a functional component 
- * without explicitly typing the 'children' prop in its own file.
- * Ensure your src/components/RequireAuth.tsx defines props like:
- * interface RequireAuthProps { children: React.ReactNode; }
- */
-
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
-  const authedUser = useAppSelector((state: any) => state.authedUser);
+  
+  // Using RootState for better type inference
+  const authedUser = useAppSelector((state: RootState) => state.authedUser);
 
   useEffect(() => {
+    // Loads initial users and questions into the Redux store
     dispatch(handleInitialData());
   }, [dispatch]);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 font-sans">
+      {/* Navigation only appears if the user is logged in */}
       {authedUser && <Nav />}
       
-      <div className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6">
         <Routes>
+          {/* Public Route */}
           <Route path="/login" element={<Login />} />
           
+          {/* Protected Routes - Wrapped in RequireAuth */}
           <Route 
             path="/" 
             element={
@@ -72,10 +82,11 @@ const App: React.FC = () => {
             } 
           />
 
+          {/* Fallback Routes for 404 handling */}
           <Route path="/404" element={<NotFound />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </div>
+      </main>
     </div>
   );
 };
