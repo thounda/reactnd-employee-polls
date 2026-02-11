@@ -1,18 +1,16 @@
 /**
  * FILE: src/slices/usersSlice.ts
- * DESCRIPTION: Manages user data. Interfaces have been moved to types.ts 
- * to resolve type mismatch errors in the questionsSlice.
+ * DESCRIPTION: Manages the collection of users.
+ * Handles the user-side of relational updates when questions are created or answered.
  */
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-// Importing the shared types to ensure compatibility across the app
-import { User, UsersState, AnswerPayload as UserAnswerPayload } from './types';
+import { User, UsersState, AnswerPayload, RootState } from './types';
 
 /**
- * Interface for the payload when a user creates a question
- * (Kept here as it's specific to user-question relationship logic)
+ * Interface for the payload when a user creates a new question.
  */
-interface UserQuestionPayload {
+interface AddQuestionToUserPayload {
   authedUser: string;
   qid: string;
 }
@@ -24,36 +22,53 @@ const usersSlice = createSlice({
   initialState,
   reducers: {
     /**
-     * Initial data load from _DATA.ts
+     * Populates the state with the users object retrieved from the API.
      */
     receiveUsers(_state, action: PayloadAction<UsersState>) {
       return action.payload;
     },
+
     /**
-     * Updates the user's answers mapping.
-     * Called by handleAddAnswer thunk in questionsSlice.
+     * Updates a specific user's 'answers' object.
+     * Logic: users[userId].answers[questionId] = 'optionOne' | 'optionTwo'
      */
-    addAnswerToUser(state, action: PayloadAction<UserAnswerPayload>) {
+    addAnswerToUser(state, action: PayloadAction<AnswerPayload>) {
       const { authedUser, qid, answer } = action.payload;
-      if (state[authedUser]) {
-        state[authedUser].answers[qid] = answer;
+      const user = state[authedUser];
+      if (user) {
+        user.answers = {
+          ...user.answers,
+          [qid]: answer
+        };
       }
     },
+
     /**
-     * Adds a question ID to the user's created questions array.
-     * Called by handleAddQuestion thunk in questionsSlice.
+     * Appends a new question ID to a user's 'questions' array.
      */
-    addQuestionToUser(state, action: PayloadAction<UserQuestionPayload>) {
+    addQuestionToUser(state, action: PayloadAction<AddQuestionToUserPayload>) {
       const { authedUser, qid } = action.payload;
-      if (state[authedUser]) {
-        // Ensure we don't add duplicates if the thunk retries
-        if (!state[authedUser].questions.includes(qid)) {
-          state[authedUser].questions.push(qid);
-        }
+      const user = state[authedUser];
+      if (user && !user.questions.includes(qid)) {
+        user.questions.push(qid);
       }
     },
   },
 });
 
+// ACTIONS
 export const { receiveUsers, addAnswerToUser, addQuestionToUser } = usersSlice.actions;
+
+// SELECTORS
+/**
+ * SELECTOR: Returns the entire users object.
+ */
+export const selectUsers = (state: RootState) => state.users;
+
+/**
+ * SELECTOR: Returns a specific user by ID.
+ */
+export const selectUserById = (state: RootState, userId: string): User | undefined => 
+  state.users[userId];
+
 export default usersSlice.reducer;

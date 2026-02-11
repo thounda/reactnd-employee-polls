@@ -1,8 +1,17 @@
 /**
- * src/slices/types.ts
+ * FILE: src/slices/types.ts
+ * PATH: /c:/Projects/react/employee-polls/src/slices/types.ts
+ * DESCRIPTION: 
  * This file serves as the single source of truth for all TypeScript 
  * interfaces used across the Employee Polls application slices.
+ * * UPDATE: Added 'VoteOption' export to support type safety in _DATA.ts 
+ * while preserving all original Payload and State interfaces.
  */
+
+/**
+ * Valid keys for voting on a poll.
+ */
+export type VoteOption = 'optionOne' | 'optionTwo';
 
 /**
  * Represents the currently logged-in user's ID state.
@@ -39,14 +48,13 @@ export interface QuestionsState {
 
 /**
  * Structure for a User object in the system.
- * Narrowed 'answers' value from string to specific options for better type safety.
  */
 export interface User {
   id: string;
   password?: string;
   name: string;
   avatarURL: string;
-  answers: { [questionId: string]: 'optionOne' | 'optionTwo' };
+  answers: { [questionId: string]: VoteOption };
   questions: string[];
 }
 
@@ -72,7 +80,7 @@ export interface SaveQuestionPayload {
 export interface AnswerPayload {
   authedUser: string;
   qid: string;
-  answer: 'optionOne' | 'optionTwo';
+  answer: VoteOption;
 }
 
 /**

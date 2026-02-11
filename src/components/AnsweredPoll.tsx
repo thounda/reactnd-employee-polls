@@ -15,11 +15,11 @@ interface PollOption {
 }
 
 interface Question {
+  id: string;
+  author: string;
+  timestamp: number;
   optionOne: PollOption;
   optionTwo: PollOption;
-  id?: string;
-  author?: string;
-  timestamp?: number;
 }
 
 interface AnsweredPollProps {
@@ -30,7 +30,7 @@ interface AnsweredPollProps {
 
 /**
  * AnsweredPoll Component
- * * Renders a statistical breakdown of votes for a specific question.
+ * Renders a statistical breakdown of votes for a specific question.
  * Uses a premium, data-driven design language with smooth transitions.
  */
 const AnsweredPoll: React.FC<AnsweredPollProps> = ({ question, authedUser }) => {
@@ -48,7 +48,7 @@ const AnsweredPoll: React.FC<AnsweredPollProps> = ({ question, authedUser }) => 
   /**
    * Calculates the percentage of total votes for an option.
    */
-  const calculatePercentage = (votes: number) => {
+  const calculatePercentage = (votes: number): number => {
     if (totalVotes === 0) return 0;
     return Math.round((votes / totalVotes) * 100);
   };
@@ -71,12 +71,12 @@ const AnsweredPoll: React.FC<AnsweredPollProps> = ({ question, authedUser }) => 
         className={`relative p-8 rounded-[2.5rem] border-2 transition-all duration-700 ease-out overflow-hidden group ${
           isUserChoice 
             ? 'border-indigo-500 bg-white shadow-2xl shadow-indigo-100/50 scale-[1.02] z-10' 
-            : 'border-slate-50 bg-slate-50/40'
+            : 'border-slate-50 bg-slate-50/40 opacity-80'
         }`}
       >
         {/* User Choice Badge */}
         {isUserChoice && (
-          <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[8px] font-black px-5 py-2 rounded-bl-2xl uppercase tracking-[0.2em] shadow-lg animate-in fade-in slide-in-from-top-2 duration-1000">
+          <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[8px] font-black px-5 py-2 rounded-bl-2xl uppercase tracking-[0.2em] shadow-lg">
             Your Decision
           </div>
         )}

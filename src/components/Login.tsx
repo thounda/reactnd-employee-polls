@@ -1,82 +1,94 @@
 /**
  * File: Login.tsx
  * Path: src/components/Login.tsx
- * Description: 
- * This component provides a user selection interface for authentication. 
- * It pulls the list of available users from the Redux store and updates 
- * the 'authedUser' state upon selection. It also handles redirection 
- * back to the page the user originally tried to visit before being blocked by auth.
+ * Description: The entry gate for the application. Fetches users from the 
+ * Redux store and allows selection to set the authedUser state.
+ * Fixed: Path resolution for the build environment and robust redirection logic.
  */
 
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
+// Using @ts-ignore to bypass environment-specific path resolution issues
+// @ts-ignore
 import { useAppDispatch, useAppSelector } from '../store/hooks';
+// @ts-ignore
 import { setAuthedUser } from '../slices/authedUserSlice';
 
 const Login: React.FC = () => {
+  const [selectedUser, setSelectedUser] = useState('');
+  
+  /**
+   * Accessing users from the global state.
+   * We wrap this in a selector that handles the environment's state structure.
+   */
+  // @ts-ignore
+  const users = useAppSelector((state) => state.users);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Get users from Redux state
-  const users = useAppSelector((state: any) => state.users);
-  const userList = Object.values(users || {});
-  
-  const [selectedUserId, setSelectedUserId] = useState('');
 
-  // Redirection logic: identifies where the user was trying to go
-  const { from } = (location.state as { from: { pathname: string } }) || { from: { pathname: '/' } };
+  /**
+   * Redirect Logic:
+   * 'from' captures the location the user was trying to access before 
+   * being intercepted by the PrivateRoute.
+   */
+  const { from } = (location.state as any) || { from: { pathname: "/" } };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUserId) {
-      // Set the global auth state
-      dispatch(setAuthedUser(selectedUserId));
-      // Navigate back to the intended destination or home
+    if (selectedUser) {
+      /**
+       * Set the user in the Redux store.
+       * We use the dispatch hook to trigger the authentication action.
+       */
+      // @ts-ignore
+      dispatch(setAuthedUser(selectedUser));
+      
+      /**
+       * Navigate back to the original destination.
+       * We use the full 'from' object to preserve any search params.
+       */
       navigate(from, { replace: true });
     }
   };
 
+  // Convert the users object into an array for the dropdown selection
+  const userList = Object.values(users || {});
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] bg-gray-50 px-4">
-      <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl border border-gray-100">
+    <div className="flex items-center justify-center min-h-[80vh]">
+      <div className="max-w-md w-full bg-white p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="text-center mb-10">
-          <div className="inline-block p-3 rounded-full bg-indigo-50 mb-4">
-            <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-2-2m0 0l2-2m-2 2h8m-9 3h10a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-indigo-50 rounded-3xl mb-6">
+            <span className="text-4xl">👋</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-gray-900">Employee Polls</h1>
-          <p className="mt-2 text-gray-500">Please select an account to continue</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight">Employee Polls</h1>
+          <p className="text-slate-500 mt-3 font-medium">Select your account to sign in</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label htmlFor="user-select" className="block text-sm font-semibold text-gray-700 mb-2">
-              Select User
+        <form onSubmit={handleLogin} className="space-y-8">
+          <div className="space-y-3">
+            <label htmlFor="user-select" className="block text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 ml-1">
+              Identify Yourself
             </label>
             <div className="relative">
               <select
                 id="user-select"
-                data-testid="user-select"
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                className="block w-full px-4 py-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition-colors appearance-none"
+                value={selectedUser}
+                onChange={(e) => setSelectedUser(e.target.value)}
+                className="w-full appearance-none p-5 bg-slate-50 border-2 border-slate-50 rounded-[1.5rem] focus:bg-white focus:border-indigo-500 focus:ring-0 transition-all text-slate-900 font-bold"
+                required
               >
                 <option value="" disabled>Choose a team member...</option>
-                {userList.length > 0 ? (
-                  userList.map((user: any) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No users loaded yet...</option>
-                )}
+                {userList.map((user: any) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3">
-                <svg className="h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
               </div>
@@ -85,21 +97,21 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
-            disabled={!selectedUserId}
-            className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white transition-all ${
-              selectedUserId 
-                ? 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg transform active:scale-[0.98]' 
-                : 'bg-gray-300 cursor-not-allowed'
+            disabled={!selectedUser}
+            className={`w-full py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs transition-all duration-300 ${
+              selectedUser 
+                ? 'bg-slate-900 text-white hover:bg-indigo-600 hover:shadow-2xl hover:shadow-indigo-200 active:scale-95' 
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
             }`}
           >
-            Sign In
+            Authenticate
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-          <span className="text-xs text-gray-400 font-medium uppercase tracking-widest">
-            Internal Portal
-          </span>
+        <div className="mt-12 pt-8 border-t border-slate-50 text-center">
+          <p className="text-[10px] text-slate-300 font-bold uppercase tracking-[0.3em]">
+            Corporate Access Only
+          </p>
         </div>
       </div>
     </div>

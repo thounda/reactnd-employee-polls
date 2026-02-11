@@ -1,243 +1,268 @@
 /**
+ * FILE: src/utils/_DATA.ts
+ * PATH: /c:/Projects/react/employee-polls/src/utils/_DATA.ts
+ * DESCRIPTION:
+ * Mock database providing initial state for users and questions. 
+ * Includes methods to simulate asynchronous API calls for data fetching and persistence.
+ */
 
-FILE: src/utils/_DATA.ts
+import { 
+  User, 
+  Question, 
+  UsersState, 
+  QuestionsState, 
+  SaveQuestionPayload, 
+  AnswerPayload 
+ } from '../slices/types';
 
-DESCRIPTION:
-
-Updated mock database using physical image paths for user avatars
-
-and the specific user profiles provided.
-*/
-
-let users: any = {
-sarahedo: {
-id: 'sarahedo',
-password: 'password123',
-name: 'Sarah Edo',
-avatarURL: '/avatars/sarahedo.png',
-answers: {
-"8xf0y6ziyjabvozdd253nd": 'optionOne',
-"6ni6ok3ym7mf1p33lnez": 'optionOne',
-"am8ehyc8byjqgar0jgpub9": 'optionTwo',
-"loxhs1bqm25b708cmbf3g": 'optionTwo'
-},
-questions: ['8xf0y6ziyjabvozdd253nd', 'am8ehyc8byjqgar0jgpub9']
-},
-tylermcginnis: {
-id: 'tylermcginnis',
-password: 'abc321',
-name: 'Tyler McGinnis',
-avatarURL: '/avatars/tylermcginnis.png',
-answers: {
-"vthrdm985a262al8qx3do": 'optionOne',
-"xj352vofupe1dqz9emx13r": 'optionTwo',
-},
-questions: ['loxhs1bqm25b708cmbf3g', 'vthrdm985a262al8qx3do'],
-},
-mtsamis: {
-id: 'mtsamis',
-password: 'xyz123',
-name: 'Mike Tsamis',
-avatarURL: '/avatars/mtsamis.png',
-answers: {
-"xj352vofupe1dqz9emx13r": 'optionOne',
-"vthrdm985a262al8qx3do": 'optionTwo',
-"6ni6ok3ym7mf1p33lnez": 'optionOne'
-},
-questions: ['6ni6ok3ym7mf1p33lnez', 'xj352vofupe1dqz9emx13r'],
-},
-zoshikanlu: {
-id: 'zoshikanlu',
-password: 'pass246',
-name: 'Zenobia Oshikanlu',
-avatarURL: '/avatars/zoshikanlu.png',
-answers: {
-"xj352vofupe1dqz9emx13r": 'optionOne',
-},
-questions: [],
-}
+/**
+ * Initial mock data for users.
+ * Uses local file paths for avatars.
+ */
+export let users: UsersState = {
+  sarahedo: {
+    id: 'sarahedo',
+    name: 'Sarah Edo',
+    avatarURL: '/avatars/sarahedo.png',
+    answers: {
+      "8xf0y6ziyj7av7624brz": 'optionOne',
+      "6ni6ok3ym7mf1p33lnez": 'optionTwo',
+      "am8ehyc8byjqca69nzmx": 'optionTwo'
+    },
+    questions: ['8xf0y6ziyj7av7624brz', 'am8ehyc8byjqca69nzmx']
+  },
+  tylermcginnis: {
+    id: 'tylermcginnis',
+    name: 'Tyler McGinnis',
+    avatarURL: '/avatars/tylermcginnis.png',
+    answers: {
+      "vthrdm985a262al8qx3p": 'optionOne',
+      "6ni6ok3ym7mf1p33lnez": 'optionTwo',
+    },
+    questions: ['loxhs1bqm25b708cmbf3', 'vthrdm985a262al8qx3p'],
+  },
+  mtsamis: {
+    id: 'mtsamis',
+    name: 'Mike Tsamis',
+    avatarURL: '/avatars/mtsamis.png',
+    answers: {
+      "xj352vkh65vdn9lffv8": 'optionOne',
+      "vthrdm985a262al8qx3p": 'optionTwo',
+      "6ni6ok3ym7mf1p33lnez": 'optionTwo'
+    },
+    questions: ['6ni6ok3ym7mf1p33lnez', 'xj352vkh65vdn9lffv8'],
+  },
+  zoshikanlu: {
+    id: 'zoshikanlu',
+    name: 'Zenobi Oshikanlu',
+    avatarURL: '/avatars/zoshikanlu.png',
+    answers: {
+      "xj352vkh65vdn9lffv8": 'optionOne'
+    },
+    questions: [],
+  }
 };
 
-let questions: any = {
-"8xf0y6ziyjabvozdd253nd": {
-id: '8xf0y6ziyjabvozdd253nd',
-author: 'sarahedo',
-timestamp: 1467166872634,
-optionOne: {
-votes: ['sarahedo'],
-text: 'Build our new site with Skeleton',
-},
-optionTwo: {
-votes: [],
-text: 'Build our new site with Bootstrap',
-}
-},
-"6ni6ok3ym7mf1p33lnez": {
-id: '6ni6ok3ym7mf1p33lnez',
-author: 'mtsamis',
-timestamp: 1468479767190,
-optionOne: {
-votes: ['mtsamis', 'sarahedo'],
-text: 'become a front-end developer',
-},
-optionTwo: {
-votes: [],
-text: 'become a back-end developer'
-}
-},
-"am8ehyc8byjqgar0jgpub9": {
-id: 'am8ehyc8byjqgar0jgpub9',
-author: 'sarahedo',
-timestamp: 1488579767190,
-optionOne: {
-votes: [],
-text: 'find $50 tomorrow',
-},
-optionTwo: {
-votes: ['sarahedo'],
-text: 'learn a new programming language'
-}
-},
-"loxhs1bqm25b708cmbf3g": {
-id: 'loxhs1bqm25b708cmbf3g',
-author: 'tylermcginnis',
-timestamp: 1482579767190,
-optionOne: {
-votes: [],
-text: 'be a professional sleeper',
-},
-optionTwo: {
-votes: ['sarahedo', 'tylermcginnis'],
-text: 'be a professional explorer'
-}
-},
-"vthrdm985a262al8qx3do": {
-id: 'vthrdm985a262al8qx3do',
-author: 'tylermcginnis',
-timestamp: 1489579767190,
-optionOne: {
-votes: ['tylermcginnis'],
-text: 'hire more engineers',
-},
-optionTwo: {
-votes: ['mtsamis'],
-text: 'expand to a new office'
-}
-},
-"xj352vofupe1dqz9emx13r": {
-id: 'xj352vofupe1dqz9emx13r',
-author: 'mtsamis',
-timestamp: 1493579767190,
-optionOne: {
-votes: ['mtsamis', 'zoshikanlu'],
-text: 'conduct a user study',
-},
-optionTwo: {
-votes: ['tylermcginnis'],
-text: 'launch a marketing campaign'
-}
-}
+/**
+ * Initial mock data for questions.
+ */
+export let questions: QuestionsState = {
+  "8xf0y6ziyj7av7624brz": {
+    id: '8xf0y6ziyj7av7624brz',
+    author: 'sarahedo',
+    timestamp: 1467166872634,
+    optionOne: {
+      votes: ['sarahedo'],
+      text: 'Have horrible short term memory',
+    },
+    optionTwo: {
+      votes: [],
+      text: 'Have horrible long term memory'
+    }
+  },
+  "6ni6ok3ym7mf1p33lnez": {
+    id: '6ni6ok3ym7mf1p33lnez',
+    author: 'mtsamis',
+    timestamp: 1468479767190,
+    optionOne: {
+      votes: [],
+      text: 'Become a superhero',
+    },
+    optionTwo: {
+      votes: ['mtsamis', 'sarahedo', 'tylermcginnis'],
+      text: 'Become a supervillain'
+    }
+  },
+  "am8ehyc8byjqca69nzmx": {
+    id: 'am8ehyc8byjqca69nzmx',
+    author: 'sarahedo',
+    timestamp: 1479427192905,
+    optionOne: {
+      votes: [],
+      text: 'Be telekinetic',
+    },
+    optionTwo: {
+      votes: ['sarahedo'],
+      text: 'Be invisible'
+    }
+  },
+  "loxhs1bqm25b708cmbf3": {
+    id: 'loxhs1bqm25b708cmbf3',
+    author: 'tylermcginnis',
+    timestamp: 1482579767190,
+    optionOne: {
+      votes: [],
+      text: 'Be a front-end developer',
+    },
+    optionTwo: {
+      votes: [],
+      text: 'Be a back-end developer'
+    }
+  },
+  "vthrdm985a262al8qx3p": {
+    id: 'vthrdm985a262al8qx3p',
+    author: 'tylermcginnis',
+    timestamp: 1484339767190,
+    optionOne: {
+      votes: ['tylermcginnis'],
+      text: 'Find $50 yourself',
+    },
+    optionTwo: {
+      votes: ['mtsamis'],
+      text: 'Have your best friend find $500'
+    }
+  },
+  "xj352vkh65vdn9lffv8": {
+    id: 'xj352vkh65vdn9lffv8',
+    author: 'mtsamis',
+    timestamp: 1493579767190,
+    optionOne: {
+      votes: ['mtsamis', 'zoshikanlu'],
+      text: 'Write JavaScript',
+    },
+    optionTwo: {
+      votes: [],
+      text: 'Write Swift'
+    }
+  },
 };
 
-function generateUID () {
-return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+/**
+ * Generates a unique ID for new questions.
+ */
+function generateUID(): string {
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
 
-export function _getUsers () {
-return new Promise((res) => {
-setTimeout(() => res({...users}), 500);
-});
+/**
+ * Fetches all users from the mock database.
+ */
+export function _getUsers(): Promise<UsersState> {
+  return new Promise((res) => {
+    setTimeout(() => res({ ...users }), 1000);
+  });
 }
 
-export function _getQuestions () {
-return new Promise((res) => {
-setTimeout(() => res({...questions}), 500);
-});
+/**
+ * Fetches all questions from the mock database.
+ */
+export function _getQuestions(): Promise<QuestionsState> {
+  return new Promise((res) => {
+    setTimeout(() => res({ ...questions }), 1000);
+  });
 }
 
-function formatQuestion ({ optionOneText, optionTwoText, author }: any) {
-return {
-id: generateUID(),
-timestamp: Date.now(),
-author,
-optionOne: {
-votes: [],
-text: optionOneText,
-},
-optionTwo: {
-votes: [],
-text: optionTwoText,
-}
-};
+/**
+ * Helper used by the Redux slices to fetch both datasets simultaneously.
+ */
+export function getInitialData(): Promise<{ users: UsersState, questions: QuestionsState }> {
+  return Promise.all([
+    _getUsers(),
+    _getQuestions(),
+  ]).then(([u, q]) => ({
+    users: u,
+    questions: q,
+  }));
 }
 
-export function _saveQuestion (question: any) {
-return new Promise((res) => {
-const authedUser = question.author;
-const formattedQuestion = formatQuestion(question);
-
-setTimeout(() => {
-  questions = {
-    ...questions,
-    [formattedQuestion.id]: formattedQuestion
-  };
-  
-  users = {
-    ...users,
-    [authedUser]: {
-      ...users[authedUser],
-      questions: users[authedUser].questions.concat([formattedQuestion.id])
+/**
+ * Formats data into a valid Question object before "storing" it.
+ */
+function formatQuestion({ optionOneText, optionTwoText, author }: SaveQuestionPayload): Question {
+  return {
+    id: generateUID(),
+    timestamp: Date.now(),
+    author,
+    optionOne: {
+      votes: [],
+      text: optionOneText,
+    },
+    optionTwo: {
+      votes: [],
+      text: optionTwoText,
     }
   };
-
-  res(formattedQuestion);
-}, 500);
-
-
-});
 }
 
-export function _saveQuestionAnswer ({ authedUser, qid, answer }: any) {
-return new Promise<void>((res) => {
-setTimeout(() => {
-users = {
-...users,
-[authedUser]: {
-...users[authedUser],
-answers: {
-...users[authedUser].answers,
-[qid]: answer
-}
-}
-};
+/**
+ * Persists a new question and updates the associated user's list of questions.
+ */
+export function saveQuestion(question: SaveQuestionPayload): Promise<Question> {
+  return new Promise((res) => {
+    const authedUser = question.author;
+    const formattedQuestion = formatQuestion(question);
 
-  questions = {
-    ...questions,
-    [qid]: {
-      ...questions[qid],
-      [answer]: {
-        ...questions[qid][answer],
-        votes: questions[qid][answer].votes.concat([authedUser])
-      }
-    }
-  };
+    setTimeout(() => {
+      questions = {
+        ...questions,
+        [formattedQuestion.id]: formattedQuestion
+      };
 
-  res();
-}, 500);
+      users = {
+        ...users,
+        [authedUser]: {
+          ...users[authedUser],
+          questions: users[authedUser].questions.concat([formattedQuestion.id])
+        }
+      };
 
-
-});
+      res(formattedQuestion);
+    }, 1000);
+  });
 }
 
-export const getInitialData = () => {
-return Promise.all([
-_getUsers(),
-_getQuestions(),
-]).then(([users, questions]) => ({
-users,
-questions,
-}));
-};
+/**
+ * Persists a user's answer to a poll and updates the question's vote records.
+ */
+export function saveQuestionAnswer({ authedUser, qid, answer }: AnswerPayload): Promise<void> {
+  return new Promise((res) => {
+    setTimeout(() => {
+      // Ensure the answer is treated as a valid property of the Question object
+      const voteKey = answer as 'optionOne' | 'optionTwo';
 
-export const saveQuestion = _saveQuestion;
-export const saveQuestionAnswer = _saveQuestionAnswer;
+      users = {
+        ...users,
+        [authedUser]: {
+          ...users[authedUser],
+          answers: {
+            ...users[authedUser].answers,
+            [qid]: answer
+          }
+        }
+      };
+
+      questions = {
+        ...questions,
+        [qid]: {
+          ...questions[qid],
+          [voteKey]: {
+            ...questions[qid][voteKey],
+            votes: questions[qid][voteKey].votes.concat([authedUser])
+          }
+        }
+      };
+
+      res();
+    }, 500);
+  });
+}

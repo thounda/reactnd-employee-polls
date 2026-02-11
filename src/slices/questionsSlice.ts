@@ -1,20 +1,13 @@
 /**
  * FILE: src/slices/questionsSlice.ts
  * DESCRIPTION: Manages the questions state and handles asynchronous thunks.
- * Leverages centralized types and handles vote/question logic.
+ * Leverages centralized types and handles vote/question logic with memoized selectors.
  */
 
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import { getInitialData, saveQuestion, saveQuestionAnswer } from '../utils/_DATA';
 import { receiveUsers, addQuestionToUser, addAnswerToUser } from './usersSlice';
-import { Question, QuestionsState, AnswerPayload, User } from './types';
-
-// Define a minimal RootState interface for thunk access
-interface RootState {
-  authedUser: { value: string | null };
-  users: { [key: string]: User };
-  questions: QuestionsState;
-}
+import { Question, QuestionsState, AnswerPayload, RootState } from './types';
 
 const initialState: QuestionsState = {};
 
@@ -25,12 +18,12 @@ const initialState: QuestionsState = {};
 export const handleInitialData = createAsyncThunk(
   'shared/initialData',
   async (_, { dispatch }) => {
-    const data = await getInitialData() as { users: { [key: string]: User }, questions: QuestionsState };
+    const data = await getInitialData() as { users: any, questions: QuestionsState };
     const { users, questions } = data;
     
     // Distribute data to respective slices
     dispatch(receiveUsers(users));
-    return questions; // Returned value is handled by extraReducers below
+    return questions; 
   }
 );
 
@@ -64,6 +57,7 @@ export const handleAddQuestion = createAsyncThunk(
 export const handleAddAnswer = createAsyncThunk(
   'questions/addAnswer',
   async (payload: AnswerPayload, { dispatch }) => {
+    // Persist to "DB"
     await saveQuestionAnswer(payload);
     
     // Synchronize the users slice
@@ -77,31 +71,34 @@ const questionsSlice = createSlice({
   name: 'questions',
   initialState,
   reducers: {
-    // Standard synchronous actions if needed elsewhere
     receiveQuestions(_state, action: PayloadAction<QuestionsState>) {
       return action.payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      // Handle data from handleInitialData
       .addCase(handleInitialData.fulfilled, (_state, action) => {
         return action.payload;
       })
-      // Handle result from handleAddQuestion
       .addCase(handleAddQuestion.fulfilled, (state, action: PayloadAction<Question>) => {
         state[action.payload.id] = action.payload;
       })
-      // Handle result from handleAddAnswer
       .addCase(handleAddAnswer.fulfilled, (state, action: PayloadAction<AnswerPayload>) => {
         const { authedUser, qid, answer } = action.payload;
         if (state[qid]) {
-          // Immer handles the immutable update here
-          state[qid][answer].votes.push(authedUser);
+          const optionVotes = state[qid][answer].votes;
+          // Guard: Prevent duplicate votes in the state
+          if (!optionVotes.includes(authedUser)) {
+            optionVotes.push(authedUser);
+          }
         }
       });
   }
 });
+
+// SELECTORS
+export const selectQuestions = (state: RootState) => state.questions;
+export const selectQuestionById = (state: RootState, id: string) => state.questions[id];
 
 export const { receiveQuestions } = questionsSlice.actions;
 export default questionsSlice.reducer;
