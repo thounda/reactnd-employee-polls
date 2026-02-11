@@ -1,14 +1,13 @@
-import React from 'react';
-
-// VS CODE USERS: Uncomment these imports in your local project
-import { useAppSelector } from '../store/hooks'; 
-
 /**
  * FILE: src/components/Leaderboard.tsx
  * DESCRIPTION: 
  * Displays a high-fidelity ranked list of users based on community engagement.
  * Features a visual podium for the Top 3 and an analytical breakdown for the community.
  */
+
+import React from 'react';
+import { useAppSelector } from '../store/hooks'; 
+
 
 interface User {
   id: string;
@@ -25,7 +24,6 @@ interface RankedUser extends User {
 }
 
 const Leaderboard: React.FC = () => {
-
   const users = useAppSelector((state: any) => {
     const root = state.app || state;
     return root.users || {};
@@ -92,7 +90,6 @@ const Leaderboard: React.FC = () => {
           return (
             <div key={user.id} className={`flex flex-col items-center space-y-8 ${order}`}>
               <div className="relative group">
-                {/* Halo Glow */}
                 <div className={`absolute -inset-10 bg-gradient-to-tr ${medalGlow} rounded-full blur-3xl opacity-0 group-hover:opacity-30 transition duration-1000`}></div>
                 
                 <div className={`relative ${isFirst ? 'w-44 h-44' : 'w-32 h-32'} rounded-[2.5rem] p-1.5 bg-white shadow-2xl ring-4 ring-white transition-all duration-700 group-hover:scale-105 group-hover:-rotate-3`}>
@@ -100,7 +97,6 @@ const Leaderboard: React.FC = () => {
                     src={user.avatarURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff`} 
                     alt={user.name} 
                     className="w-full h-full rounded-[2.2rem] object-cover bg-slate-50"
-                    onError={(e) => (e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`)}
                   />
                   <div className={`absolute -bottom-4 -right-4 w-14 h-14 bg-white rounded-2xl shadow-2xl flex items-center justify-center font-black text-2xl tracking-tighter ${isFirst ? 'text-yellow-500' : 'text-slate-400'}`}>
                     {index + 1}
@@ -168,7 +164,6 @@ const Leaderboard: React.FC = () => {
                               src={user.avatarURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=6366f1&color=fff`} 
                               className="w-16 h-16 rounded-[1.5rem] object-cover ring-4 ring-white shadow-xl group-hover:rotate-3 transition-transform duration-500" 
                               alt={user.name} 
-                              onError={(e) => (e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`)}
                             />
                           </div>
                           <div>

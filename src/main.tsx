@@ -2,11 +2,8 @@
  * @file src/main.tsx
  * @description
  * Main entry point for the Employee Polls application.
- * This file initializes the React application, attaches it to the DOM,
- * and wraps the App component with necessary Context Providers:
- * 1. React.StrictMode for highlighting potential problems.
- * 2. Redux Provider to provide the global state store.
- * 3. BrowserRouter (Router) to enable navigation logic throughout the app.
+ * This file initializes the React application and establishes the 
+ * provider hierarchy: Redux -> Router -> App.
  */
 
 import React from 'react';
@@ -17,7 +14,7 @@ import { store } from './store/store';
 import App from './App';
 import './index.css';
 
-const rootElement = document.getElementById('root');
+const rootElement = document.getElementById('root') as HTMLElement;
 
 if (rootElement) {
   const root = ReactDOM.createRoot(rootElement);
@@ -25,9 +22,8 @@ if (rootElement) {
   root.render(
     <React.StrictMode>
       <Provider store={store}>
-        {/* The Router must wrap App here so that useNavigate, 
-          useLocation, and Routes can be used within App.tsx 
-          and all of its child components.
+        {/* The Router wraps App to provide navigation context 
+          to all components, including the protected route logic.
         */}
         <Router>
           <App />
@@ -36,5 +32,6 @@ if (rootElement) {
     </React.StrictMode>
   );
 } else {
-  console.error("Critical: Root element not found.");
+  console.error("Critical: Root element not found. The application failed to mount.");
 }
+

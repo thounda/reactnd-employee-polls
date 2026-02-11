@@ -28,7 +28,7 @@ interface Author {
 interface UnansweredPollProps {
   question: Question;
   author: Author;
-  dispatch: any; 
+  dispatch: any; // In VS Code, replace 'any' with your 'AppDispatch' type if available
 }
 // --- END: Interface Definitions ---
 

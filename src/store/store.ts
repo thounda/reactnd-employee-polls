@@ -25,10 +25,14 @@ export const store = configureStore({
     authedUser: authedUserReducer,
   },
   // Adding the custom logger middleware to the default middleware stack
+  // getDefaultMiddleware handles the Thunk and Serializability checks automatically
   middleware: (getDefaultMiddleware) => 
     getDefaultMiddleware().concat(logger),
 });
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
+/**
+ * Infer the `RootState` and `AppDispatch` types from the store itself.
+ * These are exported to be consumed by typed hooks in hooks.ts.
+ */
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

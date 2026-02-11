@@ -1,13 +1,13 @@
-import React from 'react';
-
 /**
  * File: src/components/Avatar.tsx
  * Description: A reusable TypeScript component to display a user's profile picture.
  * Features:
  * - Smart fallback to UI-Avatars based on the user's name.
  * - Customizable sizing and border styles.
- * - Smooth transition animations.
+ * - Smooth transition animations and error handling.
  */
+
+import React, { useState, useEffect, useMemo } from 'react';
 
 interface AvatarProps {
   /** The URL or path of the avatar image */
@@ -22,6 +22,10 @@ interface AvatarProps {
   className?: string;
 }
 
+/**
+ * Avatar Component
+ * Displays user profile pictures with an automatic fallback to initials-based placeholders.
+ */
 const Avatar: React.FC<AvatarProps> = ({ 
   url, 
   name, 
@@ -29,17 +33,19 @@ const Avatar: React.FC<AvatarProps> = ({
   border = false,
   className = ''
 }) => {
-  // Generate a dynamic fallback based on the user's initials
-  // Using a stable background color (indigo-500) for consistent branding
-  const FALLBACK_URL = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff&bold=true`;
+  // Generate a dynamic fallback based on the user's initials using useMemo for stability
+  const fallbackUrl = useMemo(() => {
+    const safeName = name.trim() || 'User';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=6366f1&color=fff&bold=true`;
+  }, [name]);
   
-  // Resolve initial source
-  const [imgSrc, setImgSrc] = React.useState<string>(url || FALLBACK_URL);
+  // State management for image source to handle loading errors
+  const [imgSrc, setImgSrc] = useState<string>(url || fallbackUrl);
 
-  // Update source if prop changes
-  React.useEffect(() => {
-    setImgSrc(url || FALLBACK_URL);
-  }, [url, FALLBACK_URL]);
+  // Sync state with props if the URL or fallback changes
+  useEffect(() => {
+    setImgSrc(url || fallbackUrl);
+  }, [url, fallbackUrl]);
 
   return (
     <div 
@@ -47,27 +53,29 @@ const Avatar: React.FC<AvatarProps> = ({
         relative
         flex-shrink-0 
         rounded-full 
-        overflow-hidden 
         bg-slate-100
         ${size} 
-        ${border ? 'ring-2 ring-indigo-500 ring-offset-2' : 'border border-slate-100'}
-        transition-all duration-300 ease-in-out
+        ${border ? 'ring-2 ring-indigo-500 ring-offset-2 ring-offset-white' : 'border border-slate-100'}
+        transition-transform duration-300 ease-in-out hover:scale-[1.05]
         ${className}
       `}
     >
       <img
-        className="w-full h-full object-cover"
+        className="w-full h-full object-cover rounded-full"
         src={imgSrc}
-        alt={`${name}'s avatar`}
+        alt={`${name}'s profile avatar`}
         loading="lazy"
         onError={() => {
           // If the custom URL fails, fall back to the generated initials avatar
-          if (imgSrc !== FALLBACK_URL) {
-            setImgSrc(FALLBACK_URL);
+          if (imgSrc !== fallbackUrl) {
+            setImgSrc(fallbackUrl);
           }
         }}
       />
-      {/* Subtle overlay for depth to prevent "flat" look on light backgrounds */}
+      
+      {/* Subtle inner-ring overlay for depth. 
+        This prevents the avatar from looking flat against light backgrounds. 
+      */}
       <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-black/5 rounded-full" />
     </div>
   );
