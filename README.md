@@ -1,97 +1,106 @@
-# Employee Polls Project
+# Employee Polls - Corporate Decision Ecosystem
 
-This is the starter code for the final assessment project for Udacity's React & Redux course.
+A high-fidelity React application built for internal community engagement. This project allows employees to post "Would You Rather" polls, vote on inquiries, and track engagement through a ranked leaderboard.
 
-The `_DATA.js` file represents a fake database and methods that let you access the data. The only thing you need to edit in the `DATA.js` file is the value of `avatarURL`. Each user should have an avatar, so you’ll need to add the path to each user’s avatar.
+## 🚀 Key Features
 
-Using the provided starter code, you'll build a React/Redux front end for the application. We recommend using the [Create React App](https://github.com/facebook/create-react-app) to bootstrap the project.
+Authenticated Access: Secure login system utilizing a mock database of corporate identities.
 
-## Data
+Categorized Dashboard: Smart filtering between "New Questions" and "Answered Polls."
 
-There are two types of objects stored in our database:
+Interactive Voting: Real-time percentage breakdowns and vote counts for community inquiries.
 
-* Users
-* Questions
+Dynamic Leaderboard: Advanced ranking algorithm based on a combined score of questions created and answers submitted.
 
-### Users
+Responsive Podium: Custom visual hierarchy for the top three community contributors.
 
-Users include:
+## 🛠 Tech Stack & Architecture
 
-| Attribute    | Type             | Description           |
-|-----------------|------------------|-------------------         |
-| id                 | String           | The user’s unique identifier |
-| password   | String           | The user’s password in order to log in the application |
-| name          | String           | The user’s first name  and last name     |
-| avatarURL  | String           | The path to the image file |
-| questions | Array | A list of ids of the polling questions this user created|
-| answers      | Object         |  The object's keys are the ids of each question this user answered. The value of each key is the answer the user selected. It can be either `'optionOne'` or `'optionTwo'` since each question has two options|
+Core Technologies
 
-### Questions
+Vite: Utilized as the build tool for lightning-fast Hot Module Replacement (HMR) and optimized production bundling.
 
-Questions include:
+TypeScript: Implemented across the entire codebase to ensure type safety, reduce runtime errors, and improve developer experience.
 
-| Attribute | Type | Description |
-|-----------------|------------------|-------------------|
-| id                  | String | The question’s unique identifier |
-| author        | String | The author’s unique identifier |
-| timestamp | String | The time when the question was created|
-| optionOne | Object | The first voting option|
-| optionTwo | Object | The second voting option|
+Redux Toolkit (RTK): Manages the global state. The store acts as a single source of truth for users and questions, utilizing slices for clean, maintainable logic.
 
-### Voting Options
+Authentication & Security
 
-Voting options are attached to questions. They include:
+Protected Routes: A custom ProtectedRoute wrapper ensures that users cannot access the Dashboard, Leaderboard, or Poll details without an active session.
 
-| Attribute | Type | Description |
-|-----------------|------------------|-------------------|
-| votes             | Array | A list that contains the id of each user who voted for that option|
-| text                | String | The text of the option |
+Session Persistence: The system tracks the authedUser in the Redux state, redirecting unauthorized attempts back to the Login portal.
 
-Your code will talk to the database via 4 methods:
+## 💻 Local Setup Instructions
 
-* `_getUsers()`
-* `_getQuestions()`
-* `_saveQuestion(question)`
-* `_saveQuestionAnswer(object)`
+Follow these steps to set up the project in your local development environment:
 
-1 `_getUsers()` Method
+## Clone the Repository
 
-*Description*: Get all of the existing users from the database.  
-*Return Value*: Object where the key is the user’s id and the value is the user object.
+git clone [https://github.com/thounda/reactnd-employee-polls.git](https://github.com/thounda/reactnd-employee-polls.git)
+cd reactnd-employee-polls
 
-2 `_getQuestions()` Method
+## Install Dependencies
 
-*Description*: Get all of the existing questions from the database.  
-*Return Value*: Object where the key is the question’s id and the value is the question object.
+npm install
 
-3 `_saveQuestion(question)` Method
+## Launch Development Server
 
-*Description*: Save the polling question in the database. If one of the parameters are missing, an error is thrown.
-*Parameters*:  Object that includes the following properties: `author`, `optionOneText`, and `optionTwoText`. More details about these properties:
+npm run dev
 
-| Attribute | Type | Description |
-|-----------------|------------------|-------------------|
-| author | String | The id of the user who posted the question|
-| optionOneText| String | The text of the first option |
-| optionTwoText | String | The text of the second option |
+The app will be available at <http://localhost:5173>.
 
-*Return Value*:  An object that has the following properties: `id`, `author`, `optionOne`, `optionTwo`, `timestamp`. More details about these properties:
+## 🧪 Testing Suite
 
-| Attribute | Type | Description |
-|-----------------|------------------|-------------------|
-| id | String | The id of the question that was posted|
-| author | String | The id of the user who posted the question|
-| optionOne | Object | The object has a text property and a votes property, which stores an array of the ids of the users who voted for that option|
-| optionTwo | Object | The object has a text property and a votes property, which stores an array of the ids of the users who voted for that option|
-|timestamp|String | The time when the question was created|
+Vite maintain a rigorous testing standard using Vitest and React Testing Library. The suite covers UI rendering, state transitions, and business logic.
 
-4 `_saveQuestionAnswer(object)` Method
+## Running All Tests
 
-*Description*: Save the answer to a particular polling question in the database. If one of the parameters are missing, an error is thrown.
-*Parameters*: Object that contains the following properties: `authedUser`, `qid`, and `answer`. More details about these properties:
+To run the entire test suite simultaneously:
 
-| Attribute | Type | Description |
-|-----------------|------------------|-------------------|
-| authedUser | String | The id of the user who answered the question|
-| qid | String | The id of the question that was answered|
-| answer | String | The option the user selected. The value should be either `"optionOne"` or `"optionTwo"`|
+npx vitest
+
+## Targeted Component Tests
+
+You can also run specific test suites for individual modules:
+
+## Target Component
+
+Command
+
+Global App / Routing
+
+npx vitest src/App.test.tsx
+
+Login Logic
+
+npx vitest src/components/**tests**/Login.test.tsx
+
+Dashboard Tabs
+
+npx vitest src/components/**tests**/Dashboard.test.tsx
+
+Leaderboard Ranking
+
+npx vitest src/components/**tests**/Leaderboard.test.tsx
+
+## 📊 Data Structures
+
+The application interfaces with a mock database (\_DATA.ts) containing:
+
+Users: Unique IDs, names, passwords, avatar URLs, and activity logs.
+
+Questions: Timestamps, authors, and option-specific vote tracking.
+
+## 🤝 Contributing
+
+Fork the Project.
+
+Create your Feature Branch (git checkout -b feature/AmazingFeature).
+
+Commit your Changes (git commit -m 'Add some AmazingFeature').
+
+Push to the Branch (git push origin feature/AmazingFeature).
+
+Open a Pull Request.
+
+This project was developed as part of the Udacity React & Redux Nanodegree Program.
