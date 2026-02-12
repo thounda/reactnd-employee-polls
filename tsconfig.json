@@ -1,21 +1,27 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "useDefineForClassFields": true,
-    "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "allowJs": false,
-    "skipLibCheck": true,
-    "esModuleInterop": false,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx"
-  },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+"compilerOptions": {
+"target": "ESNext",
+"useDefineForClassFields": true,
+"lib": ["DOM", "DOM.Iterable", "ESNext"],
+"allowJs": false,
+"skipLibCheck": true,
+"esModuleInterop": false,
+"allowSyntheticDefaultImports": true,
+"strict": true,
+"forceConsistentCasingInFileNames": true,
+"module": "ESNext",
+"moduleResolution": "Node",
+"resolveJsonModule": true,
+"isolatedModules": true,
+"noEmit": true,
+"jsx": "react-jsx",
+
+/* ADDED: Support for Vitest globals and Testing Library matchers */
+"types": ["vitest/globals", "@testing-library/jest-dom"]
+
+
+},
+/* UPDATED: Included vite.config.ts so TS can resolve its imports */
+"include": ["src", "vite.config.ts"],
+"references": [{ "path": "./tsconfig.node.json" }]
 }
