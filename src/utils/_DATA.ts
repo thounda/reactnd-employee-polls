@@ -1,6 +1,6 @@
 /**
- * FILE: src/utils/_DATA.ts
- * PATH: /c:/Projects/react/employee-polls/src/utils/_DATA.ts
+ * FILE: _DATA.ts
+ * PATH: src/utils/_DATA.ts
  * DESCRIPTION:
  * Mock database providing initial state for users and questions. 
  * Includes methods to simulate asynchronous API calls for data fetching and persistence.
@@ -208,7 +208,12 @@ function formatQuestion({ optionOneText, optionTwoText, author }: SaveQuestionPa
  * Persists a new question and updates the associated user's list of questions.
  */
 export function saveQuestion(question: SaveQuestionPayload): Promise<Question> {
-  return new Promise((res) => {
+  return new Promise((res, rej) => {
+    // GUARD CLAUSE: Validate synchronously before starting timer
+    if (!question.author || !question.optionOneText || !question.optionTwoText) {
+      return rej("Please provide optionOneText, optionTwoText, and author");
+    }
+
     const authedUser = question.author;
     const formattedQuestion = formatQuestion(question);
 
@@ -235,9 +240,18 @@ export function saveQuestion(question: SaveQuestionPayload): Promise<Question> {
  * Persists a user's answer to a poll and updates the question's vote records.
  */
 export function saveQuestionAnswer({ authedUser, qid, answer }: AnswerPayload): Promise<void> {
-  return new Promise((res) => {
+  return new Promise((res, rej) => {
+    // GUARD CLAUSE: Validate synchronously before starting timer
+    if (!authedUser || !qid || !answer) {
+      return rej("Please provide authedUser, qid, and answer");
+    }
+
+    // EXTRA SAFETY: Ensure the data we are about to update actually exists
+    if (!users[authedUser] || !questions[qid]) {
+      return rej("User or Question does not exist");
+    }
+
     setTimeout(() => {
-      // Ensure the answer is treated as a valid property of the Question object
       const voteKey = answer as 'optionOne' | 'optionTwo';
 
       users = {

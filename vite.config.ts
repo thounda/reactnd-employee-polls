@@ -1,39 +1,51 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+// Manual creation of __dirname for ESM environments
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * File: vite.config.ts
- * Description: Optimized Vite configuration for React TypeScript projects.
- * We've removed the manual 'jsx' loaders because the react-jsx transform 
- * in your tsconfig handles this more cleanly.
+ * Description: ESM-compatible configuration that avoids CommonJS __dirname errors.
  **/
 export default defineConfig({
   plugins: [
     react({
-      // The plugin automatically handles JSX in .jsx and .tsx files.
-      // We include .js here just in case you have legacy files.
       include: /\.(js|jsx|ts|tsx)$/,
     }),
   ],
   resolve: {
-    // Ensuring .tsx and .ts are prioritized
+    alias: {
+      // Use the resolved path for the '@' alias
+      '@': resolve(__dirname, './src'),
+    },
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
   },
   server: {
     port: 5173,
     strictPort: true,
+    host: true,
     hmr: {
       overlay: true,
     },
   },
   build: {
-    // Ensures the build process aligns with your TS target
     target: 'esnext',
     outDir: 'dist',
     rollupOptions: {
       input: {
-        main: './index.html',
+        main: resolve(__dirname, 'index.html'),
       },
     },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+    css: true,
+    restoreMocks: true,
   },
 });
