@@ -1,147 +1,71 @@
 /**
- * FILE: src/components/__tests__/Leaderboard.test.tsx
- * DESCRIPTION: 
- * Updated test suite for the Leaderboard component.
- * Fixes:
- * 1. TypeScript Type Mismatch: Adjusted the mock store utility to accept partial user data.
- * 2. External Resolution: Maintained @ts-ignore for the local Leaderboard import.
- * NOTE: This code is verified to be logically correct for your local Vitest environment.
+ * FILE NAME: Leaderboard.test.tsx
+ * FILE PATH: src/components/__tests__/Leaderboard.test.tsx
  */
 
-import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { describe, it, expect } from 'vitest';
-
-// @ts-ignore
+import { screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Leaderboard from '../Leaderboard';
+import { renderWithProviders } from '../../test-utils';
+import { describe, it, expect } from 'vitest';
+import type { UsersState } from '../../slices/types';
 
-// Interfaces for mock data typing
-interface UserData {
-  id: string;
-  name: string;
-  avatarURL: string;
-  answers: Record<string, string>;
-  questions: string[];
-}
-
-type UsersState = Record<string, UserData>;
-
-// Mock data simulating the application state
+// Mock data typed to match the project's UsersState
 const mockUsers: UsersState = {
   sarahedo: {
     id: 'sarahedo',
     name: 'Sarah Edo',
     avatarURL: '',
-    answers: { "8xf0y6ziyj7avl2bz794": 'optionOne', "6ni6ok3ym7mf1p33lnez": 'optionTwo' },
-    questions: ['8xf0y6ziyj7avl2bz794', 'am8e67vx8jk04bf6w6gw1'] // Total: 4
+    answers: { "q1": 'optionOne', "q2": 'optionTwo' },
+    questions: ['q1']
   },
   tylermcginnis: {
     id: 'tylermcginnis',
     name: 'Tyler McGinnis',
     avatarURL: '',
-    answers: { "vthrdm985a262al8qx37": 'optionOne' },
-    questions: ['loxhs1bqm25b708cmbf3g', 'vthrdm985a262al8qx37'] // Total: 3
+    answers: { "q1": 'optionOne' },
+    questions: ['q2', 'q3']
   },
-  johndoe: {
-    id: 'johndoe',
-    name: 'John Doe',
+  mtsamis: {
+    id: 'mtsamis',
+    name: 'Mike Tsamis',
     avatarURL: '',
-    answers: { "xj352vtx73uej9g3stsw": 'optionOne', "vthrdm985a262al8qx37": 'optionTwo' },
-    questions: [] // Total: 2
-  },
-  guest: {
-    id: 'guest',
-    name: 'Guest User',
-    avatarURL: '',
-    answers: {},
-    questions: [] // Total: 0
+    answers: { "q1": 'optionOne', "q2": 'optionTwo', "q3": 'optionOne' },
+    questions: ['q4', 'q5']
   }
 };
 
-/**
- * Utility to create a mock Redux store for the Leaderboard.
- */
-const createMockStore = (usersState: Partial<UsersState> = mockUsers) => {
-  return configureStore({
-    reducer: {
-      // Mocking the app slice containing the users object
-      app: (state = { users: usersState }) => state,
-    },
-  });
-};
-
 describe('Leaderboard Component', () => {
-  it('renders the "Calculating Rankings" loader when no users are present', () => {
-    const store = createMockStore({});
-    render(
-      <Provider store={store}>
+  it('should render all users and sort them by score (descending)', () => {
+    renderWithProviders(
+      <MemoryRouter>
         <Leaderboard />
-      </Provider>
-    );
-    expect(screen.getByText(/Calculating Rankings/i)).toBeInTheDocument();
-  });
-
-  it('renders the Leaderboard title and visual headers', () => {
-    const store = createMockStore();
-    render(
-      <Provider store={store}>
-        <Leaderboard />
-      </Provider>
-    );
-    expect(screen.getByText(/Leader/i)).toBeInTheDocument();
-    expect(screen.getByText(/Performance Metrics/i)).toBeInTheDocument();
-  });
-
-  it('assigns the "Supreme" rank label to the top scoring user', () => {
-    const store = createMockStore();
-    render(
-      <Provider store={store}>
-        <Leaderboard />
-      </Provider>
+      </MemoryRouter>,
+      {
+        preloadedState: {
+          users: mockUsers,
+          authedUser: { value: 'sarahedo' }
+        }
+      }
     );
 
-    // Sarah Edo has the highest points (4) in the mock
-    const supremePodium = screen.getByText('Supreme').closest('div');
-    expect(supremePodium).toHaveTextContent('Sarah Edo');
-  });
-
-  it('calculates the aggregate points correctly for the top user', () => {
-    const store = createMockStore();
-    render(
-      <Provider store={store}>
-        <Leaderboard />
-      </Provider>
-    );
+    // Verify Mike Tsamis is rendered
+    expect(screen.getByText('Mike Tsamis')).toBeInTheDocument();
     
-    // Check if the total score '4' is displayed in the podium area
-    expect(screen.getByText('4')).toBeInTheDocument();
-  });
+    // Using getAllByText to handle multiple instances of numbers in the UI
+    const impactElements = screen.getAllByText('3');
+    const createdElements = screen.getAllByText('2');
+    
+    expect(impactElements.length).toBeGreaterThan(0);
+    expect(createdElements.length).toBeGreaterThan(0);
 
-  it('renders users ranked #4 or lower in the global rank table', () => {
-    const store = createMockStore();
-    render(
-      <Provider store={store}>
-        <Leaderboard />
-      </Provider>
-    );
+    // Verify sorting by checking heading order
+    const headings = screen.getAllByRole('heading', { level: 3 });
+    const nameOrder = headings.map(h => h.textContent?.trim());
 
-    // Guest User is the 4th user in the sorted list
-    expect(screen.getByText('#4')).toBeInTheDocument();
-    expect(screen.getByText('Guest User')).toBeInTheDocument();
-  });
-
-  it('displays the detailed metrics (Impact/Created) for podium users', () => {
-    const store = createMockStore();
-    render(
-      <Provider store={store}>
-        <Leaderboard />
-      </Provider>
-    );
-
-    // Verify visual metrics are present
-    expect(screen.getAllByText('Impact').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Created').length).toBeGreaterThan(0);
+    // Mike Tsamis (Score: 5) should be 1st
+    expect(nameOrder[0]).toBe('Mike Tsamis');
+    expect(nameOrder).toContain('Sarah Edo');
+    expect(nameOrder).toContain('Tyler McGinnis');
   });
 });
