@@ -1,138 +1,181 @@
-import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import { MemoryRouter } from 'react-router-dom';
-
-// @ts-ignore
-import Dashboard from '../Dashboard';
-// @ts-ignore
-import questionsReducer from '../../slices/questionsSlice';
-// @ts-ignore
-import usersReducer from '../../slices/usersSlice';
-// @ts-ignore
-import authedUserReducer from '../../slices/authedUserSlice';
-
 /**
 
-File: Dashboard.test.tsx
+DESCRIPTION & OBJECTIVES:
 
-Path: src/components/tests/Dashboard.test.tsx
+FILE NAME: Dashboard.test.tsx
 
-Objective: Robust unit testing for the Dashboard component.
+FILE PATH: src/components/tests/Dashboard.test.tsx
 
-Verifies: Categorization of questions, tab switching, and count badges.
+This test suite targets the Dashboard component of the Employee Polls application.
+
+The primary objectives are:
+
+Authentication Check: Ensure the dashboard identifies the logged-in user and displays relevant data.
+
+Question Filtering: Verify polls are partitioned into 'Unanswered' and 'Answered'.
+
+UI Interaction: Validate that toggling between tabs updates the view correctly.
+
+Data Consistency: Confirm handling of empty states for both categories.
 */
 
-const mockState = {
-authedUser: {
-value: 'sarahedo'
-},
-users: {
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { BrowserRouter } from 'react-router-dom';
+import Dashboard from '../Dashboard';
+
+/* --- MOCKS --- */
+
+const mockUseAppSelector = vi.fn();
+vi.mock('../../store/hooks', () => ({
+useAppSelector: (selector: any) => mockUseAppSelector(selector),
+}));
+
+vi.mock('../../slices/authedUserSlice', () => ({
+selectAuthedUser: { name: 'selectAuthedUser' },
+}));
+vi.mock('../../slices/questionsSlice', () => ({
+selectQuestions: { name: 'selectQuestions' },
+}));
+vi.mock('../../slices/usersSlice', () => ({
+selectUsers: { name: 'selectUsers' },
+}));
+
+/* --- TEST DATA --- */
+
+const mockUsers = {
 sarahedo: {
 id: 'sarahedo',
 name: 'Sarah Edo',
-avatarURL: '',
-answers: { "q1": "optionOne" },
-questions: ['q2']
-}
+avatarURL: 'https://www.google.com/search?q=https://test-avatar.com/sarah.png',
 },
-questions: {
-"q1": {
+tylermcginnis: {
+id: 'tylermcginnis',
+name: 'Tyler McGinnis',
+avatarURL: 'https://www.google.com/search?q=https://test-avatar.com/tyler.png',
+}
+};
+
+const mockQuestions = {
+'q1': {
 id: 'q1',
 author: 'sarahedo',
 timestamp: 1467166872634,
-optionOne: { votes: ['sarahedo'], text: 'Build a React App' },
-optionTwo: { votes: [], text: 'Build an Angular App' },
+optionOne: { votes: [] as string[], text: 'Build a Spaceship' },
+optionTwo: { votes: [] as string[], text: 'Build a Submarine' },
 },
-"q2": {
+'q2': {
 id: 'q2',
-author: 'sarahedo',
-timestamp: 1468479767190,
-optionOne: { votes: [], text: 'Eat Pizza' },
-optionTwo: { votes: [], text: 'Eat Burger' },
-}
-}
+author: 'tylermcginnis',
+timestamp: 1468476767119,
+optionOne: { votes: ['sarahedo'], text: 'Eat Pizza' },
+optionTwo: { votes: [] as string[], text: 'Eat Burger' },
+},
 };
 
-const renderWithRedux = (
-component: React.ReactElement,
-{ initialState = mockState } = {}
+describe('Dashboard Component', () => {
+beforeEach(() => {
+vi.clearAllMocks();
+});
+
+const setupMockState = (
+authedUser: string | null = 'sarahedo',
+questions: Record<string, any> = mockQuestions,
+users = mockUsers
 ) => {
-const store = configureStore({
-reducer: {
-questions: questionsReducer,
-users: usersReducer,
-authedUser: authedUserReducer,
-} as any,
-preloadedState: initialState,
+mockUseAppSelector.mockImplementation((selector) => {
+if (selector.name === 'selectAuthedUser') return authedUser;
+if (selector.name === 'selectQuestions') return questions;
+if (selector.name === 'selectUsers') return users;
+return null;
 });
+};
 
+const renderDashboard = () => {
 return render(
-<Provider store={store}>
-<MemoryRouter>
-{component}
-</MemoryRouter>
-</Provider>
+<BrowserRouter>
+<Dashboard />
+</BrowserRouter>
 );
 };
 
-describe('Dashboard Component Tests', () => {
-test('renders the dashboard with categorized tabs', () => {
-renderWithRedux(<Dashboard />);
-const buttons = screen.getAllByRole('button');
-const unansweredTabExists = buttons.some(btn => btn.textContent?.includes('Unanswered Questions') || btn.textContent?.includes('New Questions'));
-const answeredTabExists = buttons.some(btn => btn.textContent?.includes('Answered Questions') || btn.textContent?.includes('Done'));
-expect(unansweredTabExists).toBe(true);
-expect(answeredTabExists).toBe(true);
+it('1. Authentication Check: renders loading spinner when auth data is missing', () => {
+setupMockState(null);
+renderDashboard();
+const spinner = document.querySelector('.animate-spin');
+expect(spinner).toBeInTheDocument();
 });
 
-test('filters and displays unanswered questions by default', () => {
-renderWithRedux(<Dashboard />);
-// "Eat Pizza" (q2) has no votes from sarahedo
-expect(screen.getByText(/Eat Pizza/i)).toBeInTheDocument();
-// "Build a React App" (q1) is answered
-expect(screen.queryByText(/Build a React App/i)).not.toBeInTheDocument();
+it('2. Question Filtering: partitions questions into Unanswered by default', () => {
+setupMockState();
+renderDashboard();
+expect(screen.getByText(/Build a Spaceship/i)).toBeInTheDocument();
+expect(screen.queryByText(/Eat Pizza/i)).not.toBeInTheDocument();
 });
 
-test('toggles to display answered questions', () => {
-renderWithRedux(<Dashboard />);
-const buttons = screen.getAllByRole('button');
-const answeredTab = buttons.find(btn =>
-btn.textContent?.includes('Answered Questions') || btn.textContent?.includes('Done')
-);
-if (!answeredTab) throw new Error("Could not find Answered Questions tab");
+it('3. UI Interaction: toggles to Answered questions and updates view', () => {
+setupMockState();
+renderDashboard();
+
+// Fix: Using a function for 'name' to ensure exact match and avoid substring collisions with 'Unanswered'
+const answeredTab = screen.getByRole('button', { 
+  name: (content) => content.startsWith('Answered Questions') 
+});
 
 fireEvent.click(answeredTab);
 
-expect(screen.getByText(/Build a React App/i)).toBeInTheDocument();
-expect(screen.queryByText(/Eat Pizza/i)).not.toBeInTheDocument();
+expect(screen.getByText(/Eat Pizza/i)).toBeInTheDocument();
+expect(screen.queryByText(/Build a Spaceship/i)).not.toBeInTheDocument();
 
 
 });
 
-test('displays correct question counts in tabs', () => {
-renderWithRedux(<Dashboard />);
-const buttons = screen.getAllByRole('button');
+it('3. UI Interaction: displays correct count badges', () => {
+setupMockState();
+renderDashboard();
 
-buttons.forEach(btn => {
-  // Use the within(btn) helper to locate the count badge specifically within each tab
-  const countElement = within(btn).getByText((_content, element) => {
-    const check = (node: Element | null) => {
-      const text = node?.textContent || "";
-      // Matches (1) based on our mock data where each category has 1 item
-      return text.replace(/\s+/g, '').includes('(1)');
-    };
-
-    const isMatch = check(element);
-    const hasMatchingChild = Array.from(element?.children || []).some(child => check(child as Element));
-
-    // Returns true only for the deepest element matching the criteria to avoid multiple hits
-    return isMatch && !hasMatchingChild;
-  });
-  
-  expect(countElement).toBeInTheDocument();
+// Match the specific multi-line spacing rendered in the DOM
+const badges = screen.getAllByText((content, element) => {
+  return element?.tagName.toLowerCase() === 'span' && content.includes('(') && content.includes('1') && content.includes(')');
 });
+expect(badges.length).toBe(2);
+
+
+});
+
+it('4. Data Consistency: displays empty state message for unanswered questions', () => {
+const allAnswered = {
+'q1': {
+...mockQuestions.q1,
+optionOne: { ...mockQuestions.q1.optionOne, votes: ['sarahedo'] }
+}
+};
+setupMockState('sarahedo', allAnswered);
+
+renderDashboard();
+expect(screen.getByText(/No unanswered questions found/i)).toBeInTheDocument();
+
+
+});
+
+it('4. Data Consistency: displays empty state message for answered questions', () => {
+const noneAnswered = {
+'q1': {
+...mockQuestions.q1,
+optionOne: { ...mockQuestions.q1.optionOne, votes: [] }
+}
+};
+setupMockState('sarahedo', noneAnswered);
+
+renderDashboard();
+
+const answeredTab = screen.getByRole('button', { 
+  name: (content) => content.startsWith('Answered Questions') 
+});
+fireEvent.click(answeredTab);
+
+expect(screen.getByText(/No answered questions found/i)).toBeInTheDocument();
 
 
 });

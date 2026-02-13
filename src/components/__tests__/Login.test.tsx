@@ -1,117 +1,159 @@
 /**
- * File: src/components/__tests__/Login.test.tsx
- * Path: /src/components/__tests__/Login.test.tsx
- * Purpose: Integration tests for the Login component ensuring dropdown selection and UI state.
- * Updated with @ts-ignore to bypass environment-specific resolution errors in the preview.
+ * File: Login.test.tsx
+ * Path: src/components/__tests__/Login.test.tsx
+ * Description: Unit and integration tests for the Login component. 
+ * Objectives:
+ * 1. Verify the component renders the initial UI correctly (form, dropdown, and branding).
+ * 2. Ensure user data from the Redux store is correctly mapped to the dropdown options.
+ * 3. Validate form state management, specifically the "Authenticate" button's enabled/disabled logic.
+ * 4. Test the login flow, including Redux action dispatching (setAuthedUser).
+ * 5. Confirm the navigation logic handles both default redirection and "from" state redirection for intercepted routes.
  */
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
-
-// @ts-ignore
 import Login from '../Login';
-// @ts-ignore
-import { useAppSelector, useAppDispatch } from '../../store/hooks';
 
-// Mocking Redux hooks to isolate component logic from the actual store
+// Mocking Redux hooks and actions
+const mockDispatch = vi.fn();
+const mockNavigate = vi.fn();
+
 vi.mock('../../store/hooks', () => ({
-  useAppSelector: vi.fn(),
-  useAppDispatch: vi.fn(),
+  useAppDispatch: () => mockDispatch,
+  useAppSelector: (selector: any) => selector({
+    users: {
+      sarahedo: { id: 'sarahedo', name: 'Sarah Edo' },
+      tylermcginnis: { id: 'tylermcginnis', name: 'Tyler McGinnis' },
+    }
+  }),
 }));
 
-// Mocking slices to verify action dispatching
-vi.mock('../../slices/authedUserSlice', () => ({
-  setAuthedUser: vi.fn((id) => ({ type: 'authedUser/set', payload: id })),
-}));
+// Mocking react-router-dom hooks
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+    useLocation: vi.fn(),
+  };
+});
+
+// Import the mocked useLocation to control it per test
+import { useLocation as mockedUseLocation } from 'react-router-dom';
 
 describe('Login Component', () => {
-  const dispatch = vi.fn();
-  const mockUsers = {
-    sarahedo: { id: 'sarahedo', name: 'Sarah Edo', avatarURL: '' },
-    tylermcginnis: { id: 'tylermcginnis', name: 'Tyler McGinnis', avatarURL: '' },
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppDispatch as any).mockReturnValue(dispatch);
-    
-    /**
-     * The component accesses state via: const users = useAppSelector((state) => state.users);
-     * We simulate the state object being passed to the selector function.
-     */
-    (useAppSelector as any).mockImplementation((selectorFn: any) => {
-      const mockState = { users: mockUsers };
-      return selectorFn(mockState);
-    });
+    (mockedUseLocation as any).mockReturnValue({ state: null });
   });
 
-  it('renders the login screen header', () => {
+  it('1. Initial UI: renders the login form with default state', () => {
     render(
       <MemoryRouter>
         <Login />
       </MemoryRouter>
     );
-    // Verifies that the brand/header text is present
+
     expect(screen.getByText(/Employee Polls/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Identify Yourself/i)).toBeInTheDocument();
+    
+    // Check if the button is initially disabled
+    const submitButton = screen.getByRole('button', { name: /Authenticate/i });
+    expect(submitButton).toBeDisabled();
+    expect(submitButton).toHaveClass('bg-slate-100');
   });
 
-  it('contains an "Authenticate" button that is initially disabled', () => {
+  it('2. Data Loading: populates the dropdown with users from the store', () => {
     render(
       <MemoryRouter>
         <Login />
       </MemoryRouter>
     );
-    const authButton = screen.getByRole('button', { name: /Authenticate/i });
-    expect(authButton).toBeInTheDocument();
-    // Logic check: Button should not be clickable until a user is selected
-    expect(authButton).toBeDisabled();
+
+    const select = screen.getByRole('combobox');
+    expect(select).toHaveDisplayValue('Choose a team member...');
+    
+    // Check for specific users in the list
+    expect(screen.getByText('Sarah Edo')).toBeInTheDocument();
+    expect(screen.getByText('Tyler McGinnis')).toBeInTheDocument();
   });
 
-  /**
-   * REQUIREMENT 2: use fireEvent to change UI state and verify with expect()
-   */
-  it('allows selecting a user from the dropdown and enables the button', async () => {
+  it('3. Interaction: enables the button when a user is selected', () => {
     render(
       <MemoryRouter>
         <Login />
       </MemoryRouter>
     );
+
+    const select = screen.getByRole('combobox');
+    const submitButton = screen.getByRole('button', { name: /Authenticate/i });
+
+    // Simulate selecting a user
+    fireEvent.change(select, { target: { value: 'sarahedo' } });
+
+    expect(select).toHaveValue('sarahedo');
+    expect(submitButton).toBeEnabled();
+    expect(submitButton).toHaveClass('bg-slate-900');
+  });
+
+  it('4. Login Flow: dispatches setAuthedUser and navigates on submit', () => {
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
+
+    const select = screen.getByRole('combobox');
+    const submitButton = screen.getByRole('button', { name: /Authenticate/i });
+
+    fireEvent.change(select, { target: { value: 'tylermcginnis' } });
+    fireEvent.click(submitButton);
+
+    // Verify action dispatch (setAuthedUser logic)
+    expect(mockDispatch).toHaveBeenCalledTimes(1);
     
-    // Find the select element by its associated label
-    const select = screen.getByLabelText(/Identify Yourself/i) as HTMLSelectElement;
-    
-    // Wait for the options to be rendered from the mocked Redux state
-    await waitFor(() => {
-      expect(screen.getByText('Sarah Edo')).toBeInTheDocument();
+    // Verify navigation happened to the default path "/"
+    expect(mockNavigate).toHaveBeenCalledWith({ pathname: "/" }, { replace: true });
+  });
+
+  it('5. Redirect Logic: navigates to the "from" location if it exists in state', () => {
+    // Setup a specific "from" path in the location state
+    const targetPath = '/add';
+    (mockedUseLocation as any).mockReturnValue({
+      state: { from: { pathname: targetPath } }
     });
 
-    // Simulate the user selecting an option - REQUIREMENT 2 (fireEvent.change)
-    fireEvent.change(select, { target: { value: 'sarahedo' } });
-    
-    // Assert that the internal state updated the DOM value - REQUIREMENT 2 (expect)
-    expect(select.value).toBe('sarahedo');
-    
-    const authButton = screen.getByRole('button', { name: /Authenticate/i });
-    expect(authButton).not.toBeDisabled();
-  });
-
-  it('dispatches login action on form submission', async () => {
     render(
       <MemoryRouter>
         <Login />
       </MemoryRouter>
     );
 
-    const select = screen.getByLabelText(/Identify Yourself/i);
+    const select = screen.getByRole('combobox');
+    const submitButton = screen.getByRole('button', { name: /Authenticate/i });
+
     fireEvent.change(select, { target: { value: 'sarahedo' } });
+    fireEvent.click(submitButton);
 
-    const authButton = screen.getByRole('button', { name: /Authenticate/i });
-    // Simulate click - REQUIREMENT 2 (fireEvent.click)
-    fireEvent.click(authButton);
+    // Verify navigation returned the user to the intercepted page
+    expect(mockNavigate).toHaveBeenCalledWith({ pathname: targetPath }, { replace: true });
+  });
 
-    // Verify that the dispatch function was called - REQUIREMENT 2 (expect)
-    expect(dispatch).toHaveBeenCalled();
+  it('6. Visual Feedback: changes select value when user interaction occurs', () => {
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
+
+    const select = screen.getByRole('combobox') as HTMLSelectElement;
+    
+    fireEvent.change(select, { target: { value: 'tylermcginnis' } });
+    expect(select.value).toBe('tylermcginnis');
+    
+    fireEvent.change(select, { target: { value: 'sarahedo' } });
+    expect(select.value).toBe('sarahedo');
   });
 });
