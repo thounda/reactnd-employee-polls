@@ -94,3 +94,4 @@ The application interfaces with a mock database (\_DATA.ts) containing:
 5. Open a Pull Request.
 
 _This project was developed as part of the Udacity React & Redux Nanodegree Program._
+Blessings
